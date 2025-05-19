@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App RASIC Halotech – Revisada</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    @media print {
+      tr[data-color="verde"] { background-color: #d1fae5 !important; }
+      tr[data-color="amarillo"] { background-color: #fef3c7 !important; }
+      tr[data-color="rojo"] { background-color: #fecaca !important; }
+      tr[data-color="azul"] { background-color: #cce4f7 !important; }
+    }
+  </style>
+</head>
+<body class="p-4 bg-gray-100">
+  <h1 class="text-2xl font-bold text-center mb-4">App RASIC Halotech</h1>
+  <div class="mb-4 text-sm text-left bg-blue-100 p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">Instrucciones de uso</h2>
+    <ul class="list-disc list-inside text-xs">
+      <li>Edita las tareas directamente en la tabla.</li>
+      <li>Asigna roles RASIC con los desplegables: Responsible (R), Accountable (A), Support (S), Consulted (C), Informed (I).</li>
+      <li>Al establecer un deadline se activará un semáforo de estado automático.</li>
+      <li>Marca la tarea como "Finalizada" para archivar.</li>
+      <li>Haz clic en Guardar para mantener la información en tu navegador.</li>
+      <li>Haz clic en Imprimir para exportar el contenido con los colores activos.</li>
+    </ul>
+  </div>
+  <div class="flex gap-2 justify-center mb-4">
+    <button onclick="agregarFila()" class="bg-green-500 text-white px-3 py-1 rounded">➕ Añadir Tarea</button>
+    <button onclick="guardarTodo()" class="bg-purple-600 text-white px-3 py-1 rounded">💾 Guardar</button>
+    <button onclick="window.print()" class="bg-blue-500 text-white px-3 py-1 rounded">🖨️ Imprimir</button>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white shadow rounded text-xs">
+      <thead class="bg-blue-500 text-white">
+        <tr>
+          <th class="p-2 border w-[600px]">Tarea</th>
+          <th class="p-2 border w-[100px]">CEO</th>
+          <th class="p-2 border w-[100px]">PMO</th>
+          <th class="p-2 border w-[100px]">Advisor</th>
+          <th class="p-2 border w-[100px]">Tozzini Freire</th>
+          <th class="p-2 border w-[100px]">Paralegal</th>
+          <th class="p-2 border">Fecha</th>
+          <th class="p-2 border">Deadline</th>
+          <th class="p-2 border">Finalizada</th>
+          <th class="p-2 border">Estado</th>
+          <th class="p-2 border">Nuevo DL</th>
+          <th class="p-2 border">🗑️</th>
+        </tr>
+      </thead>
+      <tbody id="tablaRasic"></tbody>
+    </table>
+  </div>
+  <div class="mt-6">
+    <h2 class="text-xl font-bold text-center">Correo de Seguimiento</h2>
+    <textarea id="emailTexto" class="w-full p-2 border rounded h-32 text-xs mt-2" placeholder="Se generará automáticamente si una tarea está vencida..."></textarea>
+    <div class="flex gap-2 mt-2 justify-center">
+      <button onclick="cortarTexto()" class="p-2 bg-gray-600 text-white rounded">✉️ Copiar y Abrir Email</button>
+    </div>
+  </div>
+  <script>
+    const roles = ["", "R", "A", "S", "C", "I"];
+
+    function crearFila(tarea = "") {
+      const tr = document.createElement("tr");
+      tr.className = "text-center border text-xs";
+      tr.innerHTML = `
+        <td class="p-2 border"><textarea class="w-full p-1 border rounded resize-y" rows="2">${tarea}</textarea></td>
+        ${Array(5).fill('').map(() => `<td class="p-2 border"><select class="w-full p-1 border rounded text-xs">${roles.map(r => `<option>${r}</option>`).join('')}</select></td>`).join('')}
+        <td class="p-2 border">${new Date().toISOString().split("T")[0]}</td>
+        <td class="p-2 border"><input type="date" class="w-full p-1 border rounded" onchange="actualizarSemaforo(this)"></td>
+        <td class="p-2 border"><select onchange="actualizarFinalizada(this)" class="w-full p-1 border rounded"><option>No</option><option>Si</option></select></td>
+        <td class="p-2 border semaforo">⚪</td>
+        <td class="p-2 border"><input type="date" class="w-full p-1 border rounded" disabled></td>
+        <td class="p-2 border"><button onclick="protegerEliminacion(this)" class="text-red-600">🗑️</button></td>
+      `;
+      return tr;
+    }
+
+    function agregarFila() {
+      const tbody = document.getElementById("tablaRasic");
+      const fila = crearFila();
+      tbody.appendChild(fila);
+      guardarTodo();
+    }
+
+    function guardarTodo() {
+      const data = [];
+      document.querySelectorAll("#tablaRasic tr").forEach(row => {
+        const tarea = row.querySelector("textarea").value;
+        const selects = row.querySelectorAll("select");
+        const rasic = Array.from(selects).slice(0, 5).map(s => s.value);
+        const fechaActual = row.cells[6].textContent;
+        const deadline = row.cells[7].querySelector("input").value;
+        const tareaFinalizada = row.cells[8].querySelector("select").value;
+        const estado = row.cells[9].textContent;
+        const nuevoDeadline = row.cells[10].querySelector("input").value;
+        data.push({ tarea, rasic, fechaActual, deadline, tareaFinalizada, estado, nuevoDeadline });
+      });
+      localStorage.setItem("tablaTareasData", JSON.stringify(data));
+      alert("Tareas guardadas correctamente.");
+    }
+
+    function cargarTareas() {
+      const data = localStorage.getItem("tablaTareasData");
+      if (!data) return;
+      const tareas = JSON.parse(data);
+      tareas.forEach(d => {
+        const fila = crearFila(d.tarea);
+        const selects = fila.querySelectorAll("select");
+        d.rasic.forEach((val, i) => selects[i].value = val);
+        fila.cells[6].textContent = d.fechaActual;
+        fila.cells[7].querySelector("input").value = d.deadline;
+        fila.cells[8].querySelector("select").value = d.tareaFinalizada;
+        fila.cells[9].textContent = d.estado;
+        fila.cells[10].querySelector("input").value = d.nuevoDeadline;
+        document.getElementById("tablaRasic").appendChild(fila);
+      });
+    }
+
+    function actualizarSemaforo(input) {
+      const row = input.closest("tr");
+      const deadline = new Date(input.value);
+      const hoy = new Date();
+      const diff = (deadline - hoy) / (1000 * 60 * 60 * 24);
+      const semaforo = row.querySelector(".semaforo");
+      const nuevoDL = row.cells[10].querySelector("input");
+      const tarea = row.querySelector("textarea").value;
+
+      if (diff > 15) {
+        semaforo.textContent = "🟢";
+        row.dataset.color = "verde";
+        row.style.backgroundColor = "#d1fae5";
+        nuevoDL.disabled = true;
+      } else if (diff >= 0) {
+        semaforo.textContent = "🟡";
+        row.dataset.color = "amarillo";
+        row.style.backgroundColor = "#fef3c7";
+        nuevoDL.disabled = true;
+      } else {
+        semaforo.textContent = "🔴";
+        row.dataset.color = "rojo";
+        row.style.backgroundColor = "#fecaca";
+        nuevoDL.disabled = false;
+        document.getElementById("emailTexto").value = `Estimado equipo,%0A%0ALa tarea "${tarea}" ha vencido su fecha límite. Por favor indique:%0A- Motivo del retraso%0A- Acción correctora%0A- Nuevo deadline propuesto%0A%0AGracias.`;
+      }
+    }
+
+    function actualizarFinalizada(select) {
+      const row = select.closest("tr");
+      const tarea = row.querySelector("textarea");
+      const semaforo = row.querySelector(".semaforo");
+      if (select.value === "Si") {
+        tarea.style.textDecoration = "line-through";
+        semaforo.textContent = "🔵";
+        row.dataset.color = "azul";
+        row.style.backgroundColor = "#cce4f7";
+      } else {
+        tarea.style.textDecoration = "none";
+        semaforo.textContent = "⚪";
+        row.dataset.color = "";
+        row.style.backgroundColor = "";
+      }
+    }
+
+    function cortarTexto() {
+      const txt = document.getElementById("emailTexto").value;
+      navigator.clipboard.writeText(txt);
+      const asunto = encodeURIComponent("Seguimiento de tarea retrasada");
+      const cuerpo = encodeURIComponent(txt);
+      window.open(`mailto:?subject=${asunto}&body=${cuerpo}`, "_blank");
+    }
+
+    function protegerEliminacion(btn) {
+      const pw = prompt("Contraseña para eliminar:");
+      if (pw === "TuCa1965") {
+        btn.closest("tr").remove();
+        guardarTodo();
+      } else {
+        alert("Contraseña incorrecta.");
+      }
+    }
+
+    window.onload = () => {
+      cargarTareas();
+    };
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App RASIC Halotech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    textarea { resize: vertical; min-height: 48px; white-space: pre-wrap; word-break: break-word; }
+    @media print {
+      tr[data-color="verde"] { background-color: #d1fae5 !important; }
+      tr[data-color="amarillo"] { background-color: #fef3c7 !important; }
+      tr[data-color="rojo"] { background-color: #fecaca !important; }
+      tr[data-color="azul"] { background-color: #cce4f7 !important; }
+    }
+  </style>
+</head>
+<body class="p-4 bg-gray-100">
+  <h1 class="text-2xl font-bold text-center mb-4">App RASIC Halotech</h1>
+  <div class="mb-4 text-sm text-left bg-blue-100 p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">Instrucciones de uso</h2>
+    <ul class="list-disc list-inside text-xs">
+      <li>Edita las tareas directamente en la tabla.</li>
+      <li>Asigna roles RASIC con los desplegables: Responsible (R), Accountable (A), Support (S), Consulted (C), Informed (I).</li>
+      <li>Elige una fecha límite y se activará un semáforo visual.</li>
+      <li>Marca como "Finalizada" para archivar y colorear la línea.</li>
+      <li>Haz clic en Guardar para conservar los datos.</li>
+      <li>Usa Imprimir para generar un PDF con los colores activos.</li>
+    </ul>
+  </div>
+  <div class="flex gap-2 justify-center mb-4">
+    <button onclick="agregarFila()" class="bg-green-500 text-white px-3 py-1 rounded">➕ Añadir Tarea</button>
+    <button onclick="guardarTodo()" class="bg-purple-600 text-white px-3 py-1 rounded">💾 Guardar</button>
+    <button onclick="window.print()" class="bg-blue-500 text-white px-3 py-1 rounded">🖨️ Imprimir</button>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white shadow rounded text-xs">
+      <thead class="bg-blue-500 text-white">
+        <tr>
+          <th class="p-2 border w-[600px]">Tarea</th>
+          <th class="p-2 border w-[100px]">CEO</th>
+          <th class="p-2 border w-[100px]">PMO</th>
+          <th class="p-2 border w-[100px]">Advisor</th>
+          <th class="p-2 border w-[100px]">Tozzini Freire</th>
+          <th class="p-2 border w-[100px]">Paralegal</th>
+          <th class="p-2 border">Fecha</th>
+          <th class="p-2 border">Deadline</th>
+          <th class="p-2 border">Finalizada</th>
+          <th class="p-2 border">Estado</th>
+          <th class="p-2 border">Nuevo DL</th>
+          <th class="p-2 border">🗑️</th>
+        </tr>
+      </thead>
+      <tbody id="tablaRasic"></tbody>
+    </table>
+  </div>
+  <div class="mt-6">
+    <h2 class="text-xl font-bold text-center">Correo de Seguimiento</h2>
+    <textarea id="emailTexto" class="w-full p-2 border rounded h-32 text-xs mt-2" placeholder="Se generará automáticamente si una tarea está vencida..."></textarea>
+    <div class="flex gap-2 mt-2 justify-center">
+      <button onclick="cortarTexto()" class="p-2 bg-gray-600 text-white rounded">✉️ Copiar y Abrir Email</button>
+    </div>
+  </div>
+  <script>
+    const roles = ["", "R", "A", "S", "C", "I"];
+
+    function crearFila(data = {}) {
+      const tr = document.createElement("tr");
+      tr.className = "text-center border text-xs";
+      const tarea = data.tarea || "";
+      const rasic = data.rasic || ["", "", "", "", ""];
+      const fechaActual = data.fechaActual || new Date().toISOString().split("T")[0];
+      const deadline = data.deadline || "";
+      const tareaFinalizada = data.tareaFinalizada || "No";
+      const estado = data.estado || "⚪";
+      const nuevoDeadline = data.nuevoDeadline || "";
+
+      tr.dataset.color = colorDesdeEstado(estado);
+      tr.style.backgroundColor = colorFondo(tr.dataset.color);
+
+      tr.innerHTML = `
+        <td class="p-2 border"><textarea class="w-full p-1 border rounded resize-y" rows="2">${tarea}</textarea></td>
+        ${rasic.map(val => `<td class="p-2 border"><select class="w-full p-1 border rounded text-xs">${roles.map(r => `<option ${r === val ? "selected" : ""}>${r}</option>`).join('')}</select></td>`).join('')}
+        <td class="p-2 border">${fechaActual}</td>
+        <td class="p-2 border"><input type="date" class="w-full p-1 border rounded" value="${deadline}" onchange="actualizarSemaforo(this)"></td>
+        <td class="p-2 border"><select onchange="actualizarFinalizada(this)" class="w-full p-1 border rounded"><option ${tareaFinalizada === "No" ? "selected" : ""}>No</option><option ${tareaFinalizada === "Si" ? "selected" : ""}>Si</option></select></td>
+        <td class="p-2 border semaforo">${estado}</td>
+        <td class="p-2 border"><input type="date" class="w-full p-1 border rounded" value="${nuevoDeadline}" ${estado === "🔴" ? "" : "disabled"}></td>
+        <td class="p-2 border"><button onclick="protegerEliminacion(this)" class="text-red-600">🗑️</button></td>
+      `;
+      return tr;
+    }
+
+    function agregarFila() {
+      const fila = crearFila();
+      document.getElementById("tablaRasic").appendChild(fila);
+      guardarTodo();
+    }
+
+    function guardarTodo() {
+      const data = [];
+      document.querySelectorAll("#tablaRasic tr").forEach(row => {
+        const tarea = row.querySelector("textarea").value;
+        const selects = row.querySelectorAll("select");
+        const rasic = Array.from(selects).slice(0, 5).map(s => s.value);
+        const fechaActual = row.cells[6].textContent;
+        const deadline = row.cells[7].querySelector("input").value;
+        const tareaFinalizada = row.cells[8].querySelector("select").value;
+        const estado = row.cells[9].textContent;
+        const nuevoDeadline = row.cells[10].querySelector("input").value;
+        data.push({ tarea, rasic, fechaActual, deadline, tareaFinalizada, estado, nuevoDeadline });
+      });
+      localStorage.setItem("tablaTareasData", JSON.stringify(data));
+    }
+
+    function cargarTareas() {
+      const data = localStorage.getItem("tablaTareasData");
+      const tabla = document.getElementById("tablaRasic");
+      tabla.innerHTML = "";
+
+      if (data) {
+        JSON.parse(data).forEach(d => tabla.appendChild(crearFila(d)));
+      } else {
+        const tareasIniciales = [
+          "El socio extranjero debe proporcionar documentos que acrediten su existencia y buena reputación",
+          "Borrador de poderes: fiscal y societario",
+          "Aprobación de los poderes",
+          "Entrega de organigrama, pasaporte y prueba del cargo del firmante",
+          "Traducción jurada y registro de documentos",
+          "Inscripción del socio extranjero en el CNPJ",
+          "Definición de nombre, domicilio, objeto social y gobernanza",
+          "Redacción y aprobación de estatutos sociales",
+          "Registro de la filial ante la Junta Comercial",
+          "Registro municipal, estatal y ante el Banco Central",
+          "Obtención de licencia permanente",
+          "Contratación de asesoría contable y e-CNPJ"
+        ];
+        tareasIniciales.forEach(t => tabla.appendChild(crearFila({ tarea: t })));
+        guardarTodo();
+      }
+    }
+
+    function actualizarSemaforo(input) {
+      const row = input.closest("tr");
+      const deadline = new Date(input.value);
+      const hoy = new Date();
+      const diff = (deadline - hoy) / (1000 * 60 * 60 * 24);
+      const semaforo = row.querySelector(".semaforo");
+      const tarea = row.querySelector("textarea").value;
+      const nuevoDL = row.cells[10].querySelector("input");
+
+      let color = "";
+      if (diff > 15) { semaforo.textContent = "🟢"; color = "verde"; nuevoDL.disabled = true; }
+      else if (diff >= 0) { semaforo.textContent = "🟡"; color = "amarillo"; nuevoDL.disabled = true; }
+      else { semaforo.textContent = "🔴"; color = "rojo"; nuevoDL.disabled = false; document.getElementById("emailTexto").value = `Estimado equipo,%0A%0ALa tarea "${tarea}" ha vencido su fecha límite. Por favor indique:%0A- Motivo del retraso%0A- Acción correctora%0A- Nuevo deadline propuesto%0A%0AGracias.`; }
+
+      row.dataset.color = color;
+      row.style.backgroundColor = colorFondo(color);
+      guardarTodo();
+    }
+
+    function actualizarFinalizada(select) {
+      const row = select.closest("tr");
+      const tarea = row.querySelector("textarea");
+      const semaforo = row.querySelector(".semaforo");
+      if (select.value === "Si") {
+        tarea.style.textDecoration = "line-through";
+        semaforo.textContent = "🔵";
+        row.dataset.color = "azul";
+        row.style.backgroundColor = colorFondo("azul");
+      } else {
+        tarea.style.textDecoration = "none";
+        semaforo.textContent = "⚪";
+        row.dataset.color = "";
+        row.style.backgroundColor = "";
+      }
+      guardarTodo();
+    }
+
+    function cortarTexto() {
+      const txt = document.getElementById("emailTexto").value;
+      navigator.clipboard.writeText(txt);
+      const asunto = encodeURIComponent("Seguimiento de tarea retrasada");
+      const cuerpo = encodeURIComponent(txt);
+      window.open(`mailto:?subject=${asunto}&body=${cuerpo}`, "_blank");
+    }
+
+    function protegerEliminacion(btn) {
+      const pw = prompt("Contraseña para eliminar:");
+      if (pw === "TuCa1965") {
+        btn.closest("tr").remove();
+        guardarTodo();
+      } else {
+        alert("Contraseña incorrecta.");
+      }
+    }
+
+    function colorDesdeEstado(estado) {
+      return { "🟢": "verde", "🟡": "amarillo", "🔴": "rojo", "🔵": "azul" }[estado] || "";
+    }
+
+    function colorFondo(color) {
+      return {
+        verde: "#d1fae5",
+        amarillo: "#fef3c7",
+        rojo: "#fecaca",
+        azul: "#cce4f7"
+      }[color] || "";
+    }
+
+    window.onload = cargarTareas;
+  </script>
+</body>
+</html>
+
+
+
+
+

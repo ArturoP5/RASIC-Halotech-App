@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RASIC Halotech Brasil</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --font-family: 'Arial', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: black;
+        }
+
+        .btn-info {
+            background-color: var(--info-color);
+            color: white;
+        }
+
+        #task-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            display: block;
+        }
+
+        #task-table th, #task-table td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        #task-table th {
+            background-color: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        #task-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #task-table tr:hover {
+            background-color: #ddd;
+        }
+
+        .action-cell {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+            animation: modalOpen 0.4s;
+        }
+
+        @keyframes modalOpen {
+            from {opacity: 0; transform: translateY(-60px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--secondary-color);
+        }
+
+        .close-btn:hover {
+            color: var(--danger-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="date"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .status-green {
+            background-color: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+
+        .status-yellow {
+            background-color: #ffc107;
+            color: black;
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+
+        .status-red {
+            background-color: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+
+        .status-blue {
+            background-color: #17a2b8;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+
+        .rasic-role {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .rasic-letter {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            text-align: center;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            margin: 0 auto;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: var(--secondary-color);
+            font-size: 14px;
+        }
+
+        #email-settings-modal p {
+            margin-bottom: 15px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: var(--success-color);
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1001;
+            animation: notificationIn 0.5s;
+        }
+
+        @keyframes notificationIn {
+            from {transform: translateX(100%); opacity: 0;}
+            to {transform: translateX(0); opacity: 1;}
+        }
+
+        #search-filter {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        #exportImportButtons {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+
+        #importInput {
+            display: none;
+        }
+
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+
+        /* Estilos para tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .help-icon {
+            margin-left: 5px;
+            color: var(--primary-color);
+            cursor: help;
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+                margin-top: 10px;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .btn {
+                display: block;
+                width: 100%;
+                margin: 5px 0;
+            }
+
+            #task-table {
+                font-size: 14px;
+            }
+
+            #task-table th, #task-table td {
+                padding: 8px 5px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+            }
+
+            .action-cell {
+                flex-direction: column;
+            }
+
+            .action-cell .btn {
+                margin: 2px 0;
+            }
+
+            /* Ajustes específicos para móviles */
+            #task-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            .responsive-container {
+                overflow-x: auto;
+            }
+
+            #rasic-explanation {
+                padding: 10px;
+            }
+        }
+
+        /* Estilos de impresión */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body, .container {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                background-color: white;
+                box-shadow: none;
+            }
+
+            #task-table {
+                display: table;
+                width: 100%;
+            }
+
+            #task-table th, #task-table td {
+                padding: 5px;
+                font-size: 12px;
+            }
+        }
+
+        /* Estilos para el modo oscuro */
+        @media (prefers-color-scheme: dark) {
+            body.dark-mode {
+                background-color: #2d2d2d;
+                color: #f4f4f4;
+            }
+
+            body.dark-mode .container {
+                background-color: #3d3d3d;
+                box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            }
+
+            body.dark-mode #task-table th {
+                background-color: #1a1a1a;
+            }
+
+            body.dark-mode #task-table tr:nth-child(even) {
+                background-color: #4a4a4a;
+            }
+
+            body.dark-mode #task-table tr:hover {
+                background-color: #555;
+            }
+
+            body.dark-mode .modal-content {
+                background-color: #3d3d3d;
+            }
+
+            body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+                background-color: #555;
+                color: #f4f4f4;
+                border-color: #666;
+            }
+        }
+
+        /* Estilo para dispositivos pequeños y ajustes específicos */
+        @media (max-width: 480px) {
+            .table-responsive {
+                overflow-x: scroll;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            #task-table {
+                min-width: 1000px; /* Ancho mínimo para asegurar que todas las columnas son visibles con scroll */
+            }
+            
+            .btn-group {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .btn-group .btn {
+                margin: 2px 0;
+            }
+        }
+
+        /* Estilos adicionales para mejorar la responsividad */
+        .scroll-indicator {
+            display: none;
+            text-align: center;
+            font-size: 14px;
+            color: var(--secondary-color);
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .scroll-indicator {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RASIC Halotech Brasil</h1>
+            <div>
+                <button id="add-task-btn" class="btn btn-primary no-print">Añadir Nueva Tarea</button>
+                <button id="show-help-btn" class="btn btn-info no-print">Ayuda</button>
+            </div>
+        </header>
+
+        <div class="no-print">
+            <input type="text" id="search-filter" placeholder="Buscar tareas...">
+        </div>
+
+        <div id="exportImportButtons" class="no-print">
+            <button id="exportCSV" class="btn btn-success">Exportar CSV</button>
+            <button id="importCSV" class="btn btn-warning">Importar CSV</button>
+            <input type="file" id="importInput" accept=".csv">
+        </div>
+
+        <div class="scroll-indicator no-print">
+            ← Desliza horizontalmente para ver todas las columnas →
+        </div>
+
+        <div class="table-responsive">
+            <table id="task-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tarea</th>
+                        <th>Descripción</th>
+                        <th>Fecha Límite</th>
+                        <th>Estado</th>
+                        <th>TI</th>
+                        <th>PMO</th>
+                        <th>Finanzas Halotech</th>
+                        <th>Comercial</th>
+                        <th>Operaciones</th>
+                        <th class="no-print">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="task-body">
+                    <!-- Las tareas se cargarán dinámicamente aquí -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="legend no-print">
+            <div class="legend-item tooltip">
+                <div class="legend-color" style="background-color: #28a745;"></div>
+                <span>Verde: En plazo</span>
+                <span class="tooltiptext">La tarea está dentro del plazo establecido</span>
+            </div>
+            <div class="legend-item tooltip">
+                <div class="legend-color" style="background-color: #ffc107;"></div>
+                <span>Amarillo: Próximo a vencer</span>
+                <span class="tooltiptext">La tarea está próxima a vencer (3 días o menos)</span>
+            </div>
+            <div class="legend-item tooltip">
+                <div class="legend-color" style="background-color: #dc3545;"></div>
+                <span>Rojo: Vencido</span>
+                <span class="tooltiptext">La tarea ha vencido</span>
+            </div>
+            <div class="legend-item tooltip">
+                <div class="legend-color" style="background-color: #17a2b8;"></div>
+                <span>Azul: Completado</span>
+                <span class="tooltiptext">La tarea ha sido completada</span>
+            </div>
+        </div>
+
+        <div id="rasic-explanation" class="no-print">
+            <h3>¿Qué significa RASIC?</h3>
+            <p><strong>R - Responsible (Responsable):</strong> Persona que realiza la tarea.</p>
+            <p><strong>A - Approve (Aprueba):</strong> Persona que aprueba el trabajo y es responsable de que se haga correctamente.</p>
+            <p><strong>S - Support (Soporte):</strong> Persona que proporciona recursos o soporte para completar la tarea.</p>
+            <p><strong>I - Informed (Informado):</strong> Persona que debe ser informada sobre el progreso o las decisiones.</p>
+            <p><strong>C - Consulted (Consultado):</strong> Persona cuya opinión es solicitada para tomar decisiones.</p>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2024 Halotech Brasil - RASIC Task Manager</p>
+        </footer>
+    </div>
+
+    <!-- Modal para añadir/editar tareas -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="modal-title">Añadir Nueva Tarea</h2>
+            <form id="task-form">
+                <input type="hidden" id="task-id">
+                <div class="form-group">
+                    <label for="task-name">Nombre de la Tarea:</label>
+                    <input type="text" id="task-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-description">Descripción:</label>
+                    <textarea id="task-description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="task-due-date">Fecha Límite:</label>
+                    <input type="date" id="task-due-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-status">Estado:</label>
+                    <select id="task-status" required>
+                        <option value="En progreso">En progreso</option>
+                        <option value="Completado">Completado</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+                
+                <h3>Asignación RASIC</h3>
+                
+                <!-- TI -->
+                <div class="form-group">
+                    <label for="ti-role">TI:</label>
+                    <select id="ti-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Approve</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <!-- PMO -->
+                <div class="form-group">
+                    <label for="pmo-role">PMO:</label>
+                    <select id="pmo-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Approve</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <!-- Finanzas Halotech -->
+                <div class="form-group">
+                    <label for="finanzas-role">Finanzas Halotech:</label>
+                    <select id="finanzas-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Approve</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <!-- Comercial -->
+                <div class="form-group">
+                    <label for="comercial-role">Comercial:</label>
+                    <select id="comercial-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Approve</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <!-- Operaciones -->
+                <div class="form-group">
+                    <label for="operaciones-role">Operaciones:</label>
+                    <select id="operaciones-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Approve</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <button type="submit" id="save-task-btn" class="btn btn-success">Guardar Tarea</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de ayuda -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Ayuda - RASIC Halotech Brasil</h2>
+            <h3>Gestión de Tareas</h3>
+            <ul>
+                <li><strong>Añadir Tarea:</strong> Haz clic en "Añadir Nueva Tarea" y completa el formulario.</li>
+                <li><strong>Editar Tarea:</strong> Haz clic en el botón "Editar" junto a la tarea que desees modificar.</li>
+                <li><strong>Eliminar Tarea:</strong> Haz clic en el botón "Eliminar" junto a la tarea que desees borrar.</li>
+                <li><strong>Buscar Tareas:</strong> Utiliza el campo de búsqueda para filtrar tareas por nombre, descripción o estado.</li>
+            </ul>
+            
+            <h3>Sistema de Semáforo</h3>
+            <ul>
+                <li><strong>Verde:</strong> La tarea está dentro del plazo establecido.</li>
+                <li><strong>Amarillo:</strong> La tarea está próxima a vencer (3 días o menos).</li>
+                <li><strong>Rojo:</strong> La tarea ha vencido.</li>
+                <li><strong>Azul:</strong> La tarea ha sido completada.</li>
+            </ul>
+            
+            <h3>Exportación e Importación</h3>
+            <ul>
+                <li><strong>Exportar:</strong> Haz clic en "Exportar CSV" para descargar todas tus tareas en formato CSV.</li>
+                <li><strong>Importar:</strong> Haz clic en "Importar CSV" para cargar tareas desde un archivo CSV previamente exportado.</li>
+            </ul>
+            
+            <h3>Roles RASIC</h3>
+            <ul>
+                <li><strong>R - Responsible (Responsable):</strong> Persona que realiza la tarea.</li>
+                <li><strong>A - Approve (Aprueba):</strong> Persona que aprueba el trabajo y es responsable de que se haga correctamente.</li>
+                <li><strong>S - Support (Soporte):</strong> Persona que proporciona recursos o soporte para completar la tarea.</li>
+                <li><strong>I - Informed (Informado):</strong> Persona que debe ser informada sobre el progreso o las decisiones.</li>
+                <li><strong>C - Consulted (Consultado):</strong> Persona cuya opinión es solicitada para tomar decisiones.</li>
+            </ul>
+            
+            <h3>Datos</h3>
+            <p>Todas las tareas se guardan localmente en tu navegador. Asegúrate de exportar regularmente tus datos como respaldo.</p>
+        </div>
+    </div>
+
+    <!-- Modal de configuración de correo -->
+    <div id="email-settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Configuración de Correo</h2>
+            <p>Esta función permite enviar correos automáticos cuando las tareas están próximas a vencer o han vencido.</p>
+            <div class="form-group">
+                <label for="email-address">Dirección de Correo:</label>
+                <input type="email" id="email-address">
+            </div>
+            <div class="form-group">
+                <label for="email-frequency">Frecuencia de Notificaciones:</label>
+                <select id="email-frequency">
+                    <option value="daily">Diariamente</option>
+                    <option value="weekly">Semanalmente</option>
+                    <option value="never">Nunca</option>
+                </select>
+            </div>
+            <button id="save-email-settings" class="btn btn-success">Guardar Configuración</button>
+        </div>
+    </div>
+
+    <!-- Notificación -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variables globales
+            let tasks = [];
+            const storageKey = 'rasicTasksHalotechBrasil';
+            
+            // Referencias a elementos DOM
+            const taskTable = document.getElementById('task-body');
+            const taskModal = document.getElementById('task-modal');
+            const helpModal = document.getElementById('help-modal');
+            const emailSettingsModal = document.getElementById('email-settings-modal');
+            const taskForm = document.getElementById('task-form');
+            const modalTitle = document.getElementById('modal-title');
+            const addTaskBtn = document.getElementById('add-task-btn');
+            const showHelpBtn = document.getElementById('show-help-btn');
+            const closeButtons = document.querySelectorAll('.close-btn');
+            const searchFilter = document.getElementById('search-filter');
+            const exportCSVBtn = document.getElementById('exportCSV');
+            const importCSVBtn = document.getElementById('importCSV');
+            const importInput = document.getElementById('importInput');
+            const notification = document.getElementById('notification');
+            
+            // Cargar tareas desde localStorage
+            function loadTasks() {
+                const savedTasks = localStorage.getItem(storageKey);
+                if (savedTasks) {
+                    tasks = JSON.parse(savedTasks);
+                } else {
+                    // Si no hay tareas guardadas, crear algunas de ejemplo
+                    tasks = [
+                        {
+                            id: 1,
+                            name: 'Implementar Sistema RASIC',
+                            description: 'Desarrollar e implementar el sistema RASIC para la gestión de tareas',
+                            dueDate: '2024-06-30',
+                            status: 'En progreso',
+                            roles: {
+                                ti: 'R',
+                                pmo: 'A',
+                                finanzas: 'I',
+                                comercial: 'C',
+                                operaciones: 'S'
+                            }
+                        },
+                        {
+                            id: 2,
+                            name: 'Capacitar al personal',
+                            description: 'Realizar sesiones de capacitación sobre el uso del sistema RASIC',
+                            dueDate: '2024-07-15',
+                            status: 'Pendiente',
+                            roles: {
+                                ti: 'S',
+                                pmo: 'R',
+                                finanzas: '',
+                                comercial: 'I',
+                                operaciones: 'I'
+                            }
+                        }
+                    ];
+                    saveTasks();
+                }
+                renderTasks();
+            }
+            
+            // Guardar tareas en localStorage
+            function saveTasks() {
+                localStorage.setItem(storageKey, JSON.stringify(tasks));
+            }
+            
+            // Renderizar tareas en la tabla
+            function renderTasks(filtered = null) {
+                const tasksToRender = filtered || tasks;
+                taskTable.innerHTML = '';
+                
+                tasksToRender.forEach(task => {
+                    const row = document.createElement('tr');
+                    
+                    // Determinar el color según la fecha límite
+                    const statusClass = getStatusClass(task);
+                    
+                    row.innerHTML = `
+                        <td>${task.id}</td>
+                        <td>${task.name}</td>
+                        <td>${task.description}</td>
+                        <td>${formatDate(task.dueDate)}</td>
+                        <td><span class="${statusClass}">${task.status}</span></td>
+                        <td class="rasic-role">${getRoleDisplay(task.roles.ti)}</td>
+                        <td class="rasic-role">${getRoleDisplay(task.roles.pmo)}</td>
+                        <td class="rasic-role">${getRoleDisplay(task.roles.finanzas)}</td>
+                        <td class="rasic-role">${getRoleDisplay(task.roles.comercial)}</td>
+                        <td class="rasic-role">${getRoleDisplay(task.roles.operaciones)}</td>
+                        <td class="action-cell no-print">
+                            <button class="btn btn-warning edit

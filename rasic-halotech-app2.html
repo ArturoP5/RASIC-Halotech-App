@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App RASIC Halotech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 40px;
+    }
+    
+    .card-verde { background-color: #d1fae5; }
+    .card-amarillo { background-color: #fef3c7; }
+    .card-rojo { background-color: #fecaca; }
+    .card-azul { background-color: #cce4f7; }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      overflow: auto;
+    }
+    
+    .modal-content {
+      background-color: white;
+      margin: 10% auto;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 8px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      .bg-verde { background-color: #d1fae5 !important; }
+      .bg-amarillo { background-color: #fef3c7 !important; }
+      .bg-rojo { background-color: #fecaca !important; }
+      .bg-azul { background-color: #cce4f7 !important; }
+    }
+    
+    .print-only { display: none; }
+    
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      border-radius: 4px;
+      color: white;
+      z-index: 1000;
+      animation: fade-in 0.3s, fade-out 0.3s 2.7s;
+    }
+    
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fade-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(20px); }
+    }
+    
+    .mobile-card {
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 p-4">
+  <h1 class="text-2xl font-bold text-center mb-4">App RASIC Halotech</h1>
+  
+  <!-- Instrucciones -->
+  <div class="bg-blue-100 p-4 rounded mb-4 shadow text-sm">
+    <h2 class="font-bold mb-2">Instrucciones de uso:</h2>
+    <ul class="list-disc ml-5 text-xs">
+      <li>Asigna roles RASIC (R: Responsible, A: Accountable, S: Support, etc.)</li>
+      <li>Elige una fecha límite para activar el semáforo visual</li>
+      <li>Marca tareas como finalizadas para archivarlas</li>
+      <li>Usa los botones para guardar, imprimir, exportar e importar</li>
+    </ul>
+  </div>
+  
+  <!-- Botones principales -->
+  <div class="flex flex-wrap gap-2 justify-center mb-4 no-print">
+    <button id="btnAgregar" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+      ➕ Agregar
+    </button>
+    <button id="btnGuardar" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+      💾 Guardar
+    </button>
+    <button id="btnImprimir" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
+      🖨️ Imprimir
+    </button>
+    <button id="btnExportar" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded">
+      📤 Exportar
+    </button>
+    <button id="btnImportar" class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded">
+      📥 Importar
+    </button>
+  </div>
+  
+  <!-- Filtros -->
+  <div class="flex flex-wrap gap-2 justify-center mb-4 no-print">
+    <select id="filtroEstado" class="border p-2 rounded">
+      <option value="todos">Todos los estados</option>
+      <option value="verde">🟢 En plazo</option>
+      <option value="amarillo">🟡 Próximo a vencer</option>
+      <option value="rojo">🔴 Vencido</option>
+      <option value="azul">🔵 Finalizado</option>
+    </select>
+    <button id="btnOrdenar" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+      📅 Ordenar por fecha
+    </button>
+    <button id="btnRecordatorios" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">
+      🔔 Recordatorios
+    </button>
+  </div>
+  
+  <!-- Vista de escritorio -->
+  <div id="vistaDesktop" class="overflow-x-auto hidden lg:block">
+    <table class="min-w-full bg-white shadow-md rounded-lg">
+      <thead class="bg-gray-800 text-white">
+        <tr>
+          <th class="py-2 px-4 border-b">Tarea</th>
+          <th class="py-2 px-4 border-b">CEO</th>
+          <th class="py-2 px-4 border-b">PMO</th>
+          <th class="py-2 px-4 border-b">Advisor</th>
+          <th class="py-2 px-4 border-b">TF</th>
+          <th class="py-2 px-4 border-b">Paralegal</th>
+          <th class="py-2 px-4 border-b">Fecha</th>
+          <th class="py-2 px-4 border-b">Deadline</th>
+          <th class="py-2 px-4 border-b">Finalizada</th>
+          <th class="py-2 px-4 border-b">Estado</th>
+          <th class="py-2 px-4 border-b">Nuevo DL</th>
+          <th class="py-2 px-4 border-b no-print">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaTareas">
+        <!-- Las tareas se cargarán aquí -->
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Vista móvil -->
+  <div id="vistaMobile" class="lg:hidden">
+    <!-- Las tarjetas se cargarán aquí -->
+  </div>
+  
+  <!-- Email de seguimiento -->
+  <div class="mt-6 no-print">
+    <h2 class="text-lg font-bold text-center mb-2">Correo de Seguimiento</h2>
+    <textarea id="emailText" class="w-full p-2 border rounded-lg h-32" 
+      placeholder="El texto del correo se generará automáticamente cuando una tarea esté vencida..."></textarea>
+    <div class="flex justify-center mt-2">
+      <button id="btnEmail" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded">
+        ✉️ Copiar y Abrir Email
+      </button>
+    </div>
+  </div>
+  
+  <!-- Modal de edición -->
+  <div id="modalEdicion" class="modal">
+    <div class="modal-content">
+      <h2 class="text-xl font-bold mb-4">Editar Tarea</h2>
+      <div id="formEdicion">
+        <!-- El formulario de edición se cargará aquí -->
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="btnCancelarEdicion" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded">
+          Cancelar
+        </button>
+        <button id="btnGuardarEdicion" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal de importación -->
+  <div id="modalImportacion" class="modal">
+    <div class="modal-content">
+      <h2 class="text-xl font-bold mb-4">Importar desde Excel</h2>
+      <p class="mb-4 text-sm">Seleccione un archivo Excel (.xlsx) con las tareas.</p>
+      <input type="file" id="fileImport" accept=".xlsx,.xls" class="border p-2 w-full rounded mb-4">
+      <div class="flex justify-end gap-2">
+        <button id="btnCancelarImport" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded">
+          Cancelar
+        </button>
+        <button id="btnProcesarImport" class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded">
+          Importar
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Contenido para impresión -->
+  <div class="print-only">
+    <h2 class="text-xl font-bold mb-2">Informe de Tareas RASIC</h2>
+    <p class="text-sm mb-4">Fecha de impresión: <span id="fechaImpresion"></span></p>
+    <div id="contenidoImpresion"></div>
+  </div>
+  
+  <!-- Footer -->
+  <div class="mt-8 text-center text-xs text-gray-500 no-print">
+    <p>App RASIC Halotech - Versión 3.0</p>
+  </div>
+  
+  <script>
+    // Definiciones globales
+    const roles = ["", "R", "A", "S", "I", "C"];
+    let tareaEditandoId = null;
+    
+    // Funciones auxiliares
+    function $(id) { return document.getElementById(id); }
+    
+    function mostrarToast(mensaje, tipo) {
+      // Eliminar toast existente
+      const toastExistente = document.querySelector('.toast');
+      if (toastExistente) toastExistente.remove();
+      
+      // Crear nuevo toast
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = mensaje;
+      
+      // Asignar color según tipo
+      switch (tipo) {
+        case 'success': toast.style.backgroundColor = '#10b981'; break;
+        case 'error': toast.style.backgroundColor = '#ef4444'; break;
+        case 'warning': toast.style.backgroundColor = '#f59e0b'; break;
+        default: toast.style.backgroundColor = '#3b82f6';
+      }
+      
+      document.body.appendChild(toast);
+      
+      // Remover después de 3 segundos
+      setTimeout(() => toast.remove(), 3000);
+    }
+    
+    function formatearFecha(fechaStr) {
+      if (!fechaStr) return "No establecida";
+      try {
+        const fecha = new Date(fechaStr);
+        return fecha.toLocaleDateString('es-ES');
+      } catch (e) {
+        return "Fecha inválida";
+      }
+    }
+    
+    function getEstadoTexto(emoji) {
+      return {
+        "🟢": "En plazo",
+        "🟡": "Próximo a vencer",
+        "🔴": "Vencido",
+        "🔵": "Finalizada",
+        "⚪": "Sin fecha"
+      }[emoji] || "Sin fecha";
+    }
+    
+    function colorDesdeEstado(estado) {
+      return {
+        "🟢": "verde",
+        "🟡": "amarillo",
+        "🔴": "rojo",
+        "🔵": "azul",
+        "⚪": ""
+      }[estado] || "";
+    }
+    
+    function calcularColorFecha(deadline) {
+      if (!deadline) return { emoji: "⚪", color: "" };
+      
+      const fechaLimite = new Date(deadline + "T00:00:00");
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      
+      const diff = (fechaLimite - hoy) / (1000 * 60 * 60 * 24);
+      
+      if (diff > 15) return { emoji: "🟢", color: "verde" };
+      else if (diff >= 0) return { emoji: "🟡", color: "amarillo" };
+      else return { emoji: "🔴", color: "rojo" };
+    }
+    
+    function sanitizarTexto(texto) {
+      if (!texto) return "";
+      return texto.replace(/[<>&"']/g, c => ({
+        '<': '&lt;', '>': '&gt;', '&': '&amp;',
+        '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+    
+    // Funciones principales
+    function agregarTarea() {
+      try {
+        const id = Date.now().toString();
+        const fechaActual = new Date().toISOString().split("T")[0];
+        
+        const nuevaTarea = {
+          id: id,
+          tarea: "",
+          rasic: ["", "", "", "", ""],
+          fechaActual: fechaActual,
+          deadline: "",
+          finalizada: "No",
+          estado: "⚪",
+          nuevoDeadline: "",
+          color: ""
+        };
+        
+        // Agregar a datos y guardar
+        const tareas = cargarTareasDesdeLocalStorage();
+        tareas.push(nuevaTarea);
+        guardarTareasEnLocalStorage(tareas);
+        
+        // Actualizar vistas
+        renderizarTareas();
+        mostrarToast("✅ Tarea agregada correctamente", "success");
+      } catch (error) {
+        console.error("Error al agregar tarea:", error);
+        mostrarToast("❌ Error al agregar tarea", "error");
+      }
+    }
+    
+    function editarTarea(id) {
+      try {
+        const tareas = cargarTareasDesdeLocalStorage();
+        const tarea = tareas.find(t => t.id === id);
+        
+        if (!tarea) {
+          mostrarToast("❌ Tarea no encontrada", "error");
+          return;
+        }
+        
+        tareaEditandoId = id;
+        
+        // Construir formulario de edición
+        const formulario = $('formEdicion');
+        formulario.innerHTML = `
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Tarea</label>
+            <textarea id="edit-tarea" class="w-full p-2 border rounded">${tarea.tarea}</textarea>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">CEO</label>
+              <select id="edit-ceo" class="w-full p-2 border rounded">
+                ${roles.map(r => `<option ${r === tarea.rasic[0] ? 'selected' : ''}>${r}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">PMO</label>
+              <select id="edit-pmo" class="w-full p-2 border rounded">
+                ${roles.map(r => `<option ${r === tarea.rasic[1] ? 'selected' : ''}>${r}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Advisor</label>
+              <select id="edit-advisor" class="w-full p-2 border rounded">
+                ${roles.map(r => `<option ${r === tarea.rasic[2] ? 'selected' : ''}>${r}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">TF</label>
+              <select id="edit-tf" class="w-full p-2 border rounded">
+                ${roles.map(r => `<option ${r === tarea.rasic[3] ? 'selected' : ''}>${r}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Paralegal</label>
+              <select id="edit-paralegal" class="w-full p-2 border rounded">
+                ${roles.map(r => `<option ${r === tarea.rasic[4] ? 'selected' : ''}>${r}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Fecha límite</label>
+              <input type="date" id="edit-deadline" class="w-full p-2 border rounded" value="${tarea.deadline}">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Estado</label>
+              <select id="edit-finalizada" class="w-full p-2 border rounded">
+                <option value="No" ${tarea.finalizada === 'No' ? 'selected' : ''}>No finalizada</option>
+                <option value="Si" ${tarea.finalizada === 'Si' ? 'selected' : ''}>Finalizada</option>
+              </select>
+            </div>
+            ${tarea.estado === "🔴" ? `
+            <div>
+              <label class="block text-sm font-medium mb-1">Nuevo deadline</label>
+              <input type="date" id="edit-nuevo-deadline" class="w-full p-2 border rounded" value="${tarea.nuevoDeadline}">
+            </div>
+            ` : ''}
+          </div>
+        `;
+        
+        // Mostrar modal
+        $('modalEdicion').style.display = 'block';
+      } catch (error) {
+        console.error("Error al editar tarea:", error);
+        mostrarToast("❌ Error al abrir editor", "error");
+      }
+    }
+    
+    function guardarEdicion() {
+      try {
+        if (!tareaEditandoId) return;
+        
+        const tareas = cargarTareasDesdeLocalStorage();
+        const index = tareas.findIndex(t => t.id === tareaEditandoId);
+        
+        if (index === -1) {
+          mostrarToast("❌ Tarea no encontrada", "error");
+          return;
+        }
+        
+        // Obtener los valores del formulario
+        const tarea = $('edit-tarea').value;
+        const ceo = $('edit-ceo').value;
+        const pmo = $('edit-pmo').value;
+        const advisor = $('edit-advisor').value;
+        const tf = $('edit-tf').value;
+        const paralegal = $('edit-paralegal').value;
+        const deadline = $('edit-deadline').value;
+        const finalizada = $('edit-finalizada').value;
+        
+        // Actualizar la tarea
+        tareas[index].tarea = tarea;
+        tareas[index].rasic = [ceo, pmo, advisor, tf, paralegal];
+        tareas[index].deadline = deadline;
+        tareas[index].finalizada = finalizada;
+        
+        // Actualizar el estado según finalizada y deadline
+        if (finalizada === "Si") {
+          tareas[index].estado = "🔵";
+          tareas[index].color = "azul";
+        } else if (deadline) {
+          const estadoInfo = calcularColorFecha(deadline);
+          tareas[index].estado = estadoInfo.emoji;
+          tareas[index].color = estadoInfo.color;
+          
+          // Si es rojo, generar email y habilitar nuevo deadline
+          if (estadoInfo.emoji === "🔴") {
+            $('emailText').value = `Estimado equipo,
+
+La tarea "${tarea}" ha vencido su fecha límite (${formatearFecha(deadline)}). Por favor indique:
+- Motivo del retraso
+- Acción correctora
+- Nuevo deadline propuesto
+
+Gracias.`;
+          }
+        } else {
+          tareas[index].estado = "⚪";
+          tareas[index].color = "";
+        }
+        
+        // Guardar nuevo deadline si aplica
+        const nuevoDeadlineInput = $('edit-nuevo-deadline');
+        if (nuevoDeadlineInput) {
+          tareas[index].nuevoDeadline = nuevoDeadlineInput.value;
+        }
+        
+        // Guardar y actualizar vistas
+        guardarTareasEnLocalStorage(tareas);
+        renderizarTareas();
+        cerrarModal('modalEdicion');
+        tareaEditandoId = null;
+        
+        mostrarToast("✅ Tarea actualizada correctamente", "success");
+      } catch (error) {
+        console.error("Error al guardar edición:", error);
+        mostrarToast("❌ Error al guardar cambios", "error");
+      }
+    }
+    
+    function eliminarTarea(id) {
+      try {
+        const tareas = cargarTareasDesdeLocalStorage();
+        const tarea = tareas.find(t => t.id === id);
+        
+        if (!tarea) {
+          mostrarToast("❌ Tarea no encontrada", "error");
+          return;
+        }
+        
+        // Pedir confirmación
+        if (!confirm(`¿Está seguro que desea eliminar la tarea "${tarea.tarea.substring(0, 30)}${tarea.tarea.length > 30 ? '...' : ''}"?`)) {
+          return;
+        }
+        
+        // Pedir contraseña
+        const password = prompt("Introduce la contraseña para eliminar:", "");
+        if (!password) return;
+        
+        if (password === "TuCa1965") {
+          // Eliminar la tarea
+          const nuevasTareas = tareas.filter(t => t.id !== id);
+          guardarTareasEnLocalStorage(nuevasTareas);
+          renderizarTareas();
+          mostrarToast("✅ Tarea eliminada correctamente", "success");
+        } else {
+          mostrarToast("❌ Contraseña incorrecta", "error");
+        }
+      } catch (error) {
+        console.error("Error al eliminar tarea:", error);
+        mostrarToast("❌ Error al eliminar tarea", "error");
+      }
+    }
+    
+    function marcarFinalizada(id) {
+      try {
+        const tareas = cargarTareasDesdeLocalStorage();
+        const index = tareas.findIndex(t => t.id === id);
+        
+        if (index === -1) {
+          mostrarToast("❌ Tarea no encontrada", "error");
+          return;
+        }
+        
+        // Actualizar estado
+        tareas[index].finalizada = "Si";
+        tareas[index].estado = "🔵";
+        tareas[index].color = "azul";
+        
+        // Guardar y actualizar vistas
+        guardarTareasEnLocalStorage(tareas);
+        renderizarTareas();
+        
+        mostrarToast("✅ Tarea marcada como finalizada", "success");
+      } catch (error) {
+        console.error("Error al finalizar tarea:", error);
+        mostrarToast("❌ Error al finalizar tarea", "error");
+      }
+    }
+    
+    function filtrarTareas() {
+      renderizarTareas();
+    }
+    
+    function ordenarPorFecha() {
+      try {
+        const tareas = cargarTareasDesdeLocalStorage();
+        
+        // Ordenar por fecha deadline (las tareas sin fecha al final)
+        tareas.sort((a, b) => {
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
+          return new Date(a.deadline) - new Date(b.deadline);
+        });
+        
+        guardarTareasEnLocalStorage(tareas);
+        renderizarTareas();
+        
+        mostrarToast("✅ Tareas ordenadas por fecha", "success");
+      } catch (error) {
+        console.error("Error al ordenar tareas:", error);
+        mostrarToast("❌ Error al ordenar tareas", "error");
+      }
+    }
+    
+    function verificarRecordatorios() {
+      try {
+        const tareas = cargarTareasDesdeLocalStorage();
+        const recordatorios = [];
+        
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        
+        // Buscar tareas que venzan en los próximos 5 días
+        tareas.forEach(tarea => {
+          if (tarea.finalizada === "Si" || !tarea.deadline) return;
+          
+          const fechaLimite = new Date(tarea.deadline + "T00:00:00");
+          const diff = (fechaLimite - hoy) / (1000 * 60 * 60 * 24);
+          
+          if (diff <= 5 && diff >= 0) {
+            recordatorios.push(`La tarea "${tarea.tarea.substring(0, 30)}${tarea.tarea.length > 30 ? '...' : ''}" vence en ${Math.ceil(diff)} día(s)`);
+          }
+        });
+        
+        if (recordatorios.length > 0) {
+          alert("Recordatorios de tareas próximas a vencer:\n\n" + recordatorios.join("\n"));
+        } else {
+          mostrarToast("ℹ️ No hay tareas próximas a vencer", "info");
+        }
+      } catch (error) {
+        console.error("Error al verificar recordatorios:", error);
+        mostrarToast("❌ Error al verificar recordatorios", "error");
+      }
+    }
+    
+    function enviarEmail() {
+      try {
+        const texto = $('emailText').value.trim();
+        
+        if (!texto) {
+          mostrarToast("⚠️ No hay texto para enviar", "warning");
+          return;
+        }
+        
+        // Intentar copiar al portapapeles
+        navigator.clipboard.writeText(texto)
+          .then(() => {
+            // Abrir cliente de correo
+            const asunto = encodeURIComponent("Seguimiento de tarea retrasada");
+            const cuerpo = encodeURIComponent(texto);
+            window.open(`mailto:?subject=${asunto}&body=${cuerpo}`);
+            
+            mostrarToast("✅ Texto copiado al portapapeles", "success");
+          })
+          .catch(err => {
+            console.error("Error al copiar al portapapeles:", err);
+            
+            // Fallback para navegadores que no soportan clipboard API
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = texto;
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextarea);
+            
+            // Abrir cliente de correo
+            const asunto = encodeURIComponent("Seguimiento de tarea retrasada");
+            const cuerpo = encodeURIComponent(texto);
+            window.open(`mailto:?subject=${asunto}&body=${cuerpo}`);
+            
+            mostrarToast("✅ Texto copiado al portapapeles", "success");
+          });
+      } catch (error) {
+        console.error("Error al enviar email:", error);
+        mostrarToast("❌ Error al enviar email", "error");
+      }
+    }
+    
+    function exportarCSV() {
+      try {
+        const tareas = cargarTareasDesdeLocalStorage();
+        const filtro = $('filtroEstado').value;
+        
+        // Aplicar filtro si es necesario
+        const tareasFiltradas = filtro === 'todos' 
+          ? tareas 
+          : tareas.filter(t => t.color === filtro);
+        
+        // Crear contenido CSV
+        let csv = 'Tarea,CEO,PMO,Advisor,TF,Paralegal,Fecha,Deadline,Finalizada,Estado\n';
+        
+        tareasFiltradas.forEach(tarea => {
+          // Escapar comillas y reemplazar saltos de línea
+          const textoTarea = tarea.tarea.replace(/"/g, '""').replace(/\n/g, ' ');
+          
+          csv += `"${textoTarea}",${tarea.rasic[0]},${tarea.rasic[1]},${tarea.rasic[2]},${tarea.rasic[3]},${tarea.rasic[4]},` +
+                 `${tarea.fechaActual},${tarea.deadline},${tarea.finalizada},${tarea.estado}\n`;
+        });
+        
+        // Crear y descargar el archivo
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'tareas_rasic.csv');
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        mostrarToast("✅ Datos exportados correctamente", "success");
+      } catch (error) {
+        console.error("Error al exportar CSV:", error);
+        mostrarToast("❌ Error al exportar datos", "error");
+      }
+    }
+    
+    function mostrarModalImportacion() {
+      $('fileImport').value = "";
+      $('modalImportacion').style.display = 'block';
+    }
+    
+    function importarExcel() {
+      try {
+        const fileInput = $('fileImport');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+          mostrarToast("⚠️ No se ha seleccionado ningún archivo", "warning");
+          return;
+        }
+        
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // Obtener primera hoja
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            
+            // Convertir a JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            
+            if (jsonData.length === 0) {
+              mostrarToast("⚠️ El archivo no contiene datos", "warning");
+              return;
+            }
+            
+            // Preguntar si reemplazar o añadir
+            const reemplazar = confirm("¿Desea reemplazar todas las tareas existentes? Pulse 'Cancelar' para añadir las nuevas tareas a las existentes.");
+            
+            // Obtener tareas actuales
+            let tareas = reemplazar ? [] : cargarTareasDesdeLocalStorage();
+            const fechaActual = new Date().toISOString().split('T')[0];
+            
+            // Procesar los datos del Excel
+            let tareasImportadas = 0;
+            
+            jsonData.forEach(row => {
+              // Buscar los campos en diferentes formatos posibles
+              const tareaTexto = row.Tarea || row.tarea || row.TAREA || row.Descripcion || row.descripcion || '';
+              if (!tareaTexto) return; // Ignorar filas sin tarea
+              
+              // Mapear roles RASIC
+              const roles = [
+                row.CEO || row.ceo || row.Ceo || '',
+                row.PMO || row.pmo || row.Pmo || '',
+                row.Advisor || row.advisor || row.ADVISOR || '',
+                row['Tozzini Freire'] || row.Tozzini || row.tozzini || row.TF || row.tf || '',
+                row.Paralegal || row.paralegal || row.PARALEGAL || ''
+              ];
+              
+              // Procesar fecha
+              let deadline = '';
+              const fechaExcel = row.Deadline || row.deadline || row.DEADLINE || row['Fecha límite'] || row['fecha límite'];
+              
+              if (fechaExcel) {
+                // Convertir fecha según formato
+                if (typeof fechaExcel === 'number') {
+                  // Formato de Excel (número de días desde 1900)
+                  const date = XLSX.SSF.parse_date_code(fechaExcel);
+                  deadline = `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
+                } else if (typeof fechaExcel === 'string') {
+                  // Intentar parsear como string
+                  const fecha = new Date(fechaExcel);
+                  if (!isNaN(fecha.getTime())) {
+                    deadline = fecha.toISOString().split('T')[0];
+                  }
+                }
+              }
+              
+              // Estado finalizado
+              const finalizada = (row.Finalizada || row.finalizada || row.FINALIZADA || row.Estado || row.estado || '') === 'Si' ? 'Si' : 'No';
+              
+              // Calcular estado y color
+              let estado = "⚪";
+              let color = "";
+              
+              if (finalizada === "Si") {
+                estado = "🔵";
+                color = "azul";
+              } else if (deadline) {
+                const estadoInfo = calcularColorFecha(deadline);
+                estado = estadoInfo.emoji;
+                color = estadoInfo.color;
+              }
+              
+              // Crear objeto de tarea
+              const nuevaTarea = {
+                id: Date.now() + tareasImportadas,
+                tarea: tareaTexto,
+                rasic: roles,
+                fechaActual: fechaActual,
+                deadline: deadline,
+                finalizada: finalizada,
+                estado: estado,
+                color: color,
+                nuevoDeadline: ""
+              };
+              
+              tareas.push(nuevaTarea);
+              tareasImportadas++;
+            });
+            
+            // Guardar y actualizar vistas
+            guardarTareasEnLocalStorage(tareas);
+            renderizarTareas();
+            cerrarModal('modalImportacion');
+            
+            mostrarToast(`✅ Se importaron ${tareasImportadas} tareas`, "success");
+          } catch (error) {
+            console.error("Error al procesar Excel:", error);
+            mostrarToast("❌ Error al procesar el archivo", "error");
+          }
+        };
+        
+        reader.onerror = function() {
+          mostrarToast("❌ Error al leer el archivo", "error");
+        };
+        
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
+        console.error("Error al importar Excel:", error);
+        mostrarToast("❌ Error al importar datos", "error");
+      }
+    }
+    
+    function prepararImpresion() {
+      try {
+        // Actualizar fecha de impresión
+        $('fechaImpresion').textContent = new Date().toLocaleDateString();
+        
+        const contenido = $('contenidoImpresion');
+        contenido.innerHTML = '';
+        
+        // Obtener tareas según filtro
+        const tareas = cargarTareasDesdeLocalStorage();
+        const filtro = $('filtroEstado').value;
+        const tareasFiltradas = filtro === 'todos' 
+          ? tareas 
+          : tareas.filter(t => t.color === filtro);
+        
+        if (tareasFiltradas.length === 0) {
+          contenido.innerHTML = '<p>No hay tareas para imprimir</p>';
+          return;
+        }
+        
+        // Crear tabla para impresión
+        const tabla = document.createElement('table');
+        tabla.className = 'w-full border-collapse';
+        tabla.style.borderCollapse = 'collapse';
+        
+        // Cabecera
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr>
+            <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Tarea</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">CEO</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">PMO</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Advisor</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">TF</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Paralegal</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Deadline</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Estado</th>
+          </tr>
+        `;
+        tabla.appendChild(thead);
+        
+        // Cuerpo
+        const tbody = document.createElement('tbody');
+        tareasFiltradas.forEach(tarea => {
+          const tr = document.createElement('tr');
+          tr.className = `bg-${tarea.color}`;
+          
+          // Estilo para finalizada
+          const estiloTexto = tarea.finalizada === 'Si' ? 'text-decoration: line-through;' : '';
+          
+          tr.innerHTML = `
+            <td style="border: 1px solid #ccc; padding: 8px; text-align: left; ${estiloTexto}">${tarea.tarea}</td>
+            <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${tarea.rasic[0] || ''}</td>
+            <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${tarea.rasic[1] || ''}</td>
+            <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${tarea.rasic[2] || ''}</td>
+            <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${tarea.rasic[3] || ''}</td>
+            <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${tarea.rasic[4] || ''}</td>
+            <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${formatearFecha(tarea.deadline)}</td>
+            <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${tarea.estado}</td>
+          `;
+          
+          tbody.appendChild(tr);
+        });
+        
+        tabla.appendChild(tbody);
+        contenido.appendChild(tabla);
+      } catch (error) {
+        console.error("Error al preparar impresión:", error);
+        mostrarToast("❌ Error al preparar impresión", "error");
+      }
+    }
+    
+    // Funciones de persistencia
+    let almacenEnMemoria = [];
+    
+    function cargarTareasDesdeLocalStorage() {
+      try {
+        // Intentar usar localStorage primero
+        if (typeof localStorage !== 'undefined') {
+          const datos = localStorage.getItem('tareas_rasic');
+          if (datos) {
+            almacenEnMemoria = JSON.parse(datos);
+            return JSON.parse(datos);
+          }
+        }
+        // Si localStorage no está disponible o no hay datos, usar almacenamiento en memoria
+        return almacenEnMemoria;
+      } catch (error) {
+        console.log("Usando almacenamiento en memoria debido a restricciones del entorno");
+        return almacenEnMemoria;
+      }
+    }
+    
+    function guardarTareasEnLocalStorage(tareas) {
+      try {
+        // Guardar en almacenamiento en memoria
+        almacenEnMemoria = tareas;
+        
+        // Intentar guardar en localStorage si está disponible
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('tareas_rasic', JSON.stringify(tareas));
+        }
+      } catch (error) {
+        console.log("Datos guardados solo en memoria debido a restricciones del entorno");
+      }
+    }
+    
+    function cargarTareasIniciales() {
+      const tareasIniciales = [
+        "El socio extranjero debe proporcionar documentos que acrediten su existencia y buena reputación",
+        "Borrador de poderes: fiscal y societario",
+        "Aprobación de los poderes",
+        "Entrega de organigrama, pasaporte y prueba del cargo del firmante",
+        "Traducción jurada y registro de documentos",
+        "Inscripción del socio extranjero en el CNPJ",
+        "Definición de nombre, domicilio, objeto social y gobernanza",
+        "Redacción y aprobación de estatutos sociales",
+        "Registro de la filial ante la Junta Comercial",
+        "Registro municipal, estatal y ante el Banco Central",
+        "Obtención de licencia permanente",
+        "Contratación de asesoría contable y e-CNPJ"
+      ];
+      
+      const fechaActual = new Date().toISOString().split('T')[0];
+      const tareas = [];
+      
+      tareasIniciales.forEach((texto, index) => {
+        tareas.push({
+          id: Date.now() + index,
+          tarea: texto,
+          rasic: ["", "", "", "", ""],
+          fechaActual: fechaActual,
+          deadline: "",
+          finalizada: "No",
+          estado: "⚪",
+          color: "",
+          nuevoDeadline: ""
+        });
+      });
+      
+      guardarTareasEnLocalStorage(tareas);
+      return tareas;
+    }
+    
+    // Funciones de renderizado
+    function renderizarTareas() {
+      // Cargar tareas
+      let tareas = cargarTareasDesdeLocalStorage();
+      
+      // Si no hay tareas, cargar datos iniciales
+      if (tareas.length === 0) {
+        tareas = cargarTareasIniciales();
+      }
+      
+      // Aplicar filtro
+      const filtro = $('filtroEstado').value;
+      const tareasFiltradas = filtro === 'todos' 
+        ? tareas 
+        : tareas.filter(t => t.color === filtro);
+      
+      // Renderizar vista de escritorio
+      renderizarVistaDesktop(tareasFiltradas);
+      
+      // Renderizar vista móvil
+      renderizarVistaMobile(tareasFiltradas);
+    }
+    
+    function renderizarVistaDesktop(tareas) {
+      const tabla = $('tablaTareas');
+      tabla.innerHTML = '';
+      
+      if (tareas.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="12" class="py-4 text-center text-gray-500">No hay tareas que mostrar</td>';
+        tabla.appendChild(tr);
+        return;
+      }
+      
+      tareas.forEach(tarea => {
+        const tr = document.createElement('tr');
+        tr.className = tarea.color ? `bg-${tarea.color}` : '';
+        tr.dataset.id = tarea.id;
+        
+        // Estilo para finalizada
+        const estiloTexto = tarea.finalizada === 'Si' ? 'text-decoration: line-through;' : '';
+        
+        tr.innerHTML = `
+          <td class="py-2 px-4 border-b">
+            <textarea class="w-full p-1 border rounded text-sm" style="${estiloTexto}">${tarea.tarea}</textarea>
+          </td>
+          ${tarea.rasic.map((rol, i) => `
+            <td class="py-2 px-4 border-b text-center">
+              <select class="p-1 border rounded text-sm">
+                ${roles.map(r => `<option ${r === rol ? 'selected' : ''}>${r}</option>`).join('')}
+              </select>
+            </td>
+          `).join('')}
+          <td class="py-2 px-4 border-b text-center">${tarea.fechaActual}</td>
+          <td class="py-2 px-4 border-b text-center">
+            <input type="date" class="p-1 border rounded text-sm" value="${tarea.deadline}">
+          </td>
+          <td class="py-2 px-4 border-b text-center">
+            <select class="p-1 border rounded text-sm">
+              <option ${tarea.finalizada !== 'Si' ? 'selected' : ''}>No</option>
+              <option ${tarea.finalizada === 'Si' ? 'selected' : ''}>Si</option>
+            </select>
+          </td>
+          <td class="py-2 px-4 border-b text-center">${tarea.estado}</td>
+          <td class="py-2 px-4 border-b text-center">
+            <input type="date" class="p-1 border rounded text-sm" value="${tarea.nuevoDeadline}" 
+              ${tarea.estado !== '🔴' ? 'disabled' : ''}>
+          </td>
+          <td class="py-2 px-4 border-b text-center no-print">
+            <button class="bg-blue-500 text-white px-2 py-1 rounded text-xs mr-1 btn-editar">
+              ✏️
+            </button>
+            <button class="bg-red-500 text-white px-2 py-1 rounded text-xs btn-eliminar">
+              🗑️
+            </button>
+          </td>
+        `;
+        
+        // Agregar listeners
+        const btnEditar = tr.querySelector('.btn-editar');
+        if (btnEditar) {
+          btnEditar.addEventListener('click', () => editarTarea(tarea.id));
+        }
+        
+        const btnEliminar = tr.querySelector('.btn-eliminar');
+        if (btnEliminar) {
+          btnEliminar.addEventListener('click', () => eliminarTarea(tarea.id));
+        }
+        
+        // Listener para cambios en fecha
+        const inputFecha = tr.querySelector('input[type="date"]');
+        if (inputFecha) {
+          inputFecha.addEventListener('change', function() {
+            actualizarFechaTarea(tarea.id, this.value);
+          });
+        }
+        
+        // Listener para cambios en finalizada
+        const selectFinalizada = tr.querySelectorAll('select')[5]; // El 6º select (índice 5)
+        if (selectFinalizada) {
+          selectFinalizada.addEventListener('change', function() {
+            actualizarFinalizadaTarea(tarea.id, this.value);
+          });
+        }
+        
+        tabla.appendChild(tr);
+      });
+    }
+    
+    function renderizarVistaMobile(tareas) {
+      const container = $('vistaMobile');
+      container.innerHTML = '';
+      
+      if (tareas.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white p-4 rounded shadow text-center">
+            <p class="text-gray-500">No hay tareas que mostrar</p>
+          </div>
+        `;
+        return;
+      }
+      
+      tareas.forEach(tarea => {
+        const card = document.createElement('div');
+        card.className = `mobile-card bg-white ${tarea.color ? 'card-' + tarea.color : ''}`;
+        card.dataset.id = tarea.id;
+        
+        // Estilo para finalizada
+        const estiloTexto = tarea.finalizada === 'Si' ? 'text-decoration: line-through;' : '';
+        
+        card.innerHTML = `
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-bold text-sm" style="${estiloTexto}">${tarea.tarea}</h3>
+            <span class="text-xl">${tarea.estado}</span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-3">
+            <div><span class="font-semibold">CEO:</span> ${tarea.rasic[0] || '-'}</div>
+            <div><span class="font-semibold">PMO:</span> ${tarea.rasic[1] || '-'}</div>
+            <div><span class="font-semibold">Advisor:</span> ${tarea.rasic[2] || '-'}</div>
+            <div><span class="font-semibold">TF:</span> ${tarea.rasic[3] || '-'}</div>
+            <div><span class="font-semibold">Paralegal:</span> ${tarea.rasic[4] || '-'}</div>
+            <div><span class="font-semibold">Fecha:</span> ${formatearFecha(tarea.fechaActual)}</div>
+            <div><span class="font-semibold">Deadline:</span> ${formatearFecha(tarea.deadline)}</div>
+            <div><span class="font-semibold">Estado:</span> ${tarea.finalizada === 'Si' ? 'Finalizada' : getEstadoTexto(tarea.estado)}</div>
+          </div>
+          
+          <div class="flex justify-end gap-2">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs btn-editar">
+              Editar
+            </button>
+            ${tarea.finalizada !== 'Si' ? `
+              <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs btn-finalizar">
+                Finalizar
+              </button>
+            ` : ''}
+            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs btn-eliminar">
+              Eliminar
+            </button>
+          </div>
+        `;
+        
+        // Agregar listeners
+        const btnEditar = card.querySelector('.btn-editar');
+        if (btnEditar) {
+          btnEditar.addEventListener('click', () => editarTarea(tarea.id));
+        }
+        
+        const btnFinalizar = card.querySelector('.btn-finalizar');
+        if (btnFinalizar) {
+          btnFinalizar.addEventListener('click', () => marcarFinalizada(tarea.id));
+        }
+        
+        const btnEliminar = card.querySelector('.btn-eliminar');
+        if (btnEliminar) {
+          btnEliminar.addEventListener('click', () => eliminarTarea(tarea.id));
+        }
+        
+        container.appendChild(card);
+      });
+    }
+    
+    // Funciones de actualización
+    function actualizarFechaTarea(id, nuevaFecha) {
+      try {
+        const tareas = cargarTareasDesdeLocalStorage();
+        const index = tareas.findIndex(t => t.id === id);
+        
+        if (index === -1) return;
+        
+        tareas[index].deadline = nuevaFecha;
+        
+        // Si la tarea no está finalizada, actualizar estado según fecha
+        if (tareas[index].finalizada !== 'Si') {
+          if (nuevaFecha) {
+            const estadoInfo = calcularColorFecha(nuevaFecha);
+            tareas[index].estado = estadoInfo.emoji;
+            tareas[index].color = estadoInfo.color;
+            
+            // Si es rojo, generar correo
+            if (estadoInfo.emoji === '🔴') {
+              $('emailText').value = `Estimado equipo,
+
+La tarea "${tareas[index].tarea}" ha vencido su fecha límite (${formatearFecha(nuevaFecha)}). Por favor indique:
+- Motivo del retraso
+- Acción correctora
+- Nuevo deadline propuesto
+
+Gracias.`;
+            }
+          } else {
+            tareas[index].estado = '⚪';
+            tareas[index].color = '';
+          }
+        }
+        
+        guardarTareasEnLocalStorage(tareas);
+        renderizarTareas();
+      } catch (error) {
+        console.error("Error al actualizar fecha:", error);
+        mostrarToast("❌ Error al actualizar fecha", "error");
+      }
+    }
+    
+    function actualizarFinalizadaTarea(id, finalizada) {
+      try {
+        const tareas = cargarTareasDesdeLocalStorage();
+        const index = tareas.findIndex(t => t.id === id);
+        
+        if (index === -1) return;
+        
+        tareas[index].finalizada = finalizada;
+        
+        if (finalizada === 'Si') {
+          tareas[index].estado = '🔵';
+          tareas[index].color = 'azul';
+        } else {
+          // Recalcular estado según fecha
+          if (tareas[index].deadline) {
+            const estadoInfo = calcularColorFecha(tareas[index].deadline);
+            tareas[index].estado = estadoInfo.emoji;
+            tareas[index].color = estadoInfo.color;
+          } else {
+            tareas[index].estado = '⚪';
+            tareas[index].color = '';
+          }
+        }
+        
+        guardarTareasEnLocalStorage(tareas);
+        renderizarTareas();
+      } catch (error) {
+        console.error("Error al actualizar finalizada:", error);
+        mostrarToast("❌ Error al actualizar estado", "error");
+      }
+    }
+    
+    // Funciones para modales
+    function cerrarModal(modalId) {
+      $(modalId).style.display = 'none';
+    }
+    
+    // Inicialización y event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      // Cargar y renderizar tareas
+      renderizarTareas();
+      
+      // Event listeners para botones principales
+      $('btnAgregar').addEventListener('click', agregarTarea);
+      $('btnGuardar').addEventListener('click', function() {
+        mostrarToast("✅ Datos guardados correctamente", "success");
+      });
+      $('btnImprimir').addEventListener('click', function() {
+        prepararImpresion();
+        window.print();
+      });
+      $('btnExportar').addEventListener('click', exportarCSV);
+      $('btnImportar').addEventListener('click', mostrarModalImportacion);
+      
+      // Event listeners para filtros y herramientas
+      $('filtroEstado').addEventListener('change', filtrarTareas);
+      $('btnOrdenar').addEventListener('click', ordenarPorFecha);
+      $('btnRecordatorios').addEventListener('click', verificarRecordatorios);
+      
+      // Event listener para correo
+      $('btnEmail').addEventListener('click', enviarEmail);
+      
+      // Event listeners para modales
+      $('btnCancelarEdicion').addEventListener('click', function() {
+        cerrarModal('modalEdicion');
+      });
+      $('btnGuardarEdicion').addEventListener('click', guardarEdicion);
+      $('btnCancelarImport').addEventListener('click', function() {
+        cerrarModal('modalImportacion');
+      });
+      $('btnProcesarImport').addEventListener('click', importarExcel);
+      
+      // Event listeners para cerrar modales con Escape
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          cerrarModal('modalEdicion');
+          cerrarModal('modalImportacion');
+        }
+      });
+      
+      // Notificación inicial
+      setTimeout(function() {
+        mostrarToast("✅ Aplicación cargada correctamente", "success");
+      }, 500);
+    });
+  </script>
+</body>
+</html>

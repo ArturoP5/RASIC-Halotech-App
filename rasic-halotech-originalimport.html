@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App RASIC Halotech</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+        }
+        
+        header {
+            background-color: #fff;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        h1 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .container {
+            width: 100%;
+            padding: 0;
+            margin: 0 auto;
+        }
+        
+        .instructions {
+            background-color: #e6f3ff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
+        .instructions h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        .buttons {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        button, .button {
+            padding: 8px 15px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        button:hover, .button:hover {
+            opacity: 0.9;
+        }
+        
+        .add-button {
+            background-color: #27ae60;
+        }
+        
+        .save-button {
+            background-color: #3498db;
+        }
+        
+        .print-button {
+            background-color: #2980b9;
+        }
+        
+        .export-button {
+            background-color: #f39c12;
+        }
+        
+        .import-button {
+            background-color: #9b59b6;
+        }
+        
+        .filters {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+            gap: 10px;
+        }
+        
+        .filter-dropdown {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .reminder-button {
+            background-color: #f1c40f;
+            color: #000;
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        th {
+            background-color: #4b7bec;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .task-cell {
+            text-align: left;
+            min-width: 300px;
+        }
+        
+        .date-cell {
+            white-space: nowrap;
+        }
+        
+        .status-select {
+            border: none;
+            width: 100%;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        
+        .status-green {
+            background-color: #2ecc71;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-yellow {
+            background-color: #f1c40f;
+            color: black;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-red {
+            background-color: #e74c3c;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-blue {
+            background-color: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-gray {
+            background-color: #95a5a6;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .role-select {
+            border: none;
+            width: 100%;
+            padding: 3px;
+            border-radius: 3px;
+            background-color: #f8f9fa;
+        }
+        
+        .delete-button {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        
+        .task-textarea {
+            width: 100%;
+            height: 60px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        
+        .editable-cell {
+            position: relative;
+        }
+        
+        .icon {
+            margin-right: 5px;
+        }
+        
+        .status-dot {
+            height: 15px;
+            width: 15px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-green-dot {
+            background-color: #2ecc71;
+        }
+        
+        .status-yellow-dot {
+            background-color: #f1c40f;
+        }
+        
+        .status-red-dot {
+            background-color: #e74c3c;
+        }
+        
+        .status-gray-dot {
+            background-color: #95a5a6;
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body {
+                background-color: white;
+            }
+            
+            .container {
+                width: 100%;
+            }
+            
+            table {
+                font-size: 10pt;
+            }
+            
+            th, td {
+                padding: 5px;
+            }
+        }
+        
+        /* Estilos para dispositivos móviles */
+        @media (max-width: 768px) {
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                font-size: 14px;
+            }
+            
+            .buttons {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            button, .button {
+                margin: 5px;
+            }
+            
+            .task-cell {
+                min-width: 200px;
+            }
+        }
+        
+        /* Estilos para el modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close-btn:hover {
+            color: black;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>App RASIC Halotech</h1>
+    </header>
+    
+    <div class="container">
+        <div class="instructions">
+            <h2>Instrucciones de uso</h2>
+            <ul>
+                <li>Edita las tareas directamente en la tabla.</li>
+                <li>Asigna roles RASIC: Responsible (R), Accountable (A), Support (S), Consulted (C), Informed (I).</li>
+                <li>Elige una fecha límite y se activará un semáforo visual.</li>
+                <li>Marca como "Finalizada" para archivar la tarea.</li>
+                <li>Haz clic en Guardar para conservar los datos.</li>
+                <li>Usa Imprimir para generar un PDF con los colores activos.</li>
+                <li><strong>Nuevo:</strong> Filtra por estado y exporta a CSV.</li>
+                <li><strong>Nuevo:</strong> Importa tareas desde archivos Excel.</li>
+            </ul>
+        </div>
+        
+        <div class="buttons no-print">
+            <button id="add-task-btn" class="add-button">
+                <span class="icon">➕</span> Añadir Tarea
+            </button>
+            <button id="save-btn" class="save-button">
+                <span class="icon">💾</span> Guardar
+            </button>
+            <button id="print-btn" class="print-button">
+                <span class="icon">🖨️</span> Imprimir
+            </button>
+            <button id="export-btn" class="export-button">
+                <span class="icon">📤</span> Exportar CSV
+            </button>
+            <button id="import-btn" class="import-button">
+                <span class="icon">📥</span> Importar Excel
+            </button>
+        </div>
+        
+        <div class="filters no-print">
+            <select id="status-filter" class="filter-dropdown">
+                <option value="all">Todos los estados</option>
+                <option value="pending">Pendiente</option>
+                <option value="in-progress">En progreso</option>
+                <option value="completed">Completado</option>
+                <option value="cancelled">Cancelado</option>
+            </select>
+            
+            <select id="date-filter" class="filter-dropdown">
+                <option value="all">🗓️ Ordenar por fecha</option>
+                <option value="asc">Más antiguas primero</option>
+                <option value="desc">Más recientes primero</option>
+                <option value="deadline">Por fecha límite</option>
+            </select>
+            
+            <button id="reminders-btn" class="reminder-button">
+                <span class="icon">🔔</span> Recordatorios
+            </button>
+        </div>
+        
+        <div class="table-container">
+            <table id="rasic-table">
+                <thead>
+                    <tr>
+                        <th>Tarea</th>
+                        <th>CEO</th>
+                        <th>PMO</th>
+                        <th>Finanzas Halotech</th>
+                        <th>Advisor</th>
+                        <th>Tozzini Freire</th>
+                        <th>Paralegal</th>
+                        <th>Fecha</th>
+                        <th>Deadline</th>
+                        <th>Finalizada</th>
+                        <th>Estado</th>
+                        <th>Nuevo DL</th>
+                        <th class="no-print">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="task-body">
+                    <!-- Las tareas se cargarán dinámicamente aquí -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Modal para añadir/editar tareas -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="modal-title">Añadir Nueva Tarea</h2>
+            <form id="task-form">
+                <div class="form-group">
+                    <label for="task-text">Tarea:</label>
+                    <textarea id="task-text" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="deadline-date">Fecha límite:</label>
+                    <input type="date" id="deadline-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-status">Estado:</label>
+                    <select id="task-status" required>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En progreso">En progreso</option>
+                        <option value="Completado">Completado</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+                
+                <h3>Asignación de roles RASIC</h3>
+                
+                <div class="form-group">
+                    <label for="ceo-role">CEO:</label>
+                    <select id="ceo-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Accountable</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pmo-role">PMO:</label>
+                    <select id="pmo-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Accountable</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="finanzas-role">Finanzas Halotech:</label>
+                    <select id="finanzas-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Accountable</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="advisor-role">Advisor:</label>
+                    <select id="advisor-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Accountable</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tozzini-role">Tozzini Freire:</label>
+                    <select id="tozzini-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Accountable</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="paralegal-role">Paralegal:</label>
+                    <select id="paralegal-role">
+                        <option value="">Ninguno</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="A">A - Accountable</option>
+                        <option value="S">S - Support</option>
+                        <option value="I">I - Informed</option>
+                        <option value="C">C - Consulted</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="is-completed">¿Tarea finalizada?</label>
+                    <select id="is-completed">
+                        <option value="No">No</option>
+                        <option value="Sí">Sí</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="save-button">Guardar</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para importar Excel -->
+    <input type="file" id="import-file" accept=".csv,.xls,.xlsx" style="display: none;">
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variables globales
+            let tasks = [];
+            const storageKey = 'rasicTasksHalotech';
+            let currentEditingTask = null;
+            
+            // Elementos DOM
+            const taskTable = document.getElementById('rasic-table');
+            const taskBody = document.getElementById('task-body');
+            const saveBtn = document.getElementById('save-btn');
+            const printBtn = document.getElementById('print-btn');
+            const addTaskBtn = document.getElementById('add-task-btn');
+            const exportBtn = document.getElementById('export-btn');
+            const importBtn = document.getElementById('import-btn');
+            const importFile = document.getElementById('import-file');
+            const statusFilter = document.getElementById('status-filter');
+            const dateFilter = document.getElementById('date-filter');
+            const remindersBtn = document.getElementById('reminders-btn');
+            
+            // Modal
+            const taskModal = document.getElementById('task-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const taskForm = document.getElementById('task-form');
+            const closeBtn = document.querySelector('.close-btn');
+            
+            // Cargar tareas desde localStorage
+            function loadTasks() {
+                const savedTasks = localStorage.getItem(storageKey);
+                if (savedTasks) {
+                    tasks = JSON.parse(savedTasks);
+                } else {
+                    // Si no hay tareas guardadas, crear ejemplos
+                    tasks = [
+                        {
+                            id: 1,
+                            text: 'El socio extranjero de la Filial ("Socio") debe proporcionar documentos que acrediten su existencia y buena reputación (como estatutos sociales, certificado del Registro Mercantil...)',
+                            deadline: '2025-05-19',
+                            status: 'En progreso',
+                            completed: 'No',
+                            newDeadline: '19/05/2025',
+                            date: '23/05/2025',
+                            roles: {
+                                ceo: 'I',
+                                pmo: 'R',
+                                finanzas: 'S',
+                                advisor: 'I',
+                                tozzini: '',
+                                paralegal: ''
+                            }
+                        },
+                        {
+                            id: 2,
+                            text: 'Borrador de poderes a otorgar por el Socio a una persona residente en Brasil ("Poderes"): (i) poder ante la Hacienda brasileña ("Poder Fiscal"); y (ii) poder general societario ("Poder General").',
+                            deadline: '2025-05-19',
+                            status: 'En progreso',
+                            completed: 'No',
+                            newDeadline: '19/05/2025',
+                            date: '31/05/2025',
+                            roles: {
+                                ceo: 'A',
+                                pmo: 'S',
+                                finanzas: 'S',
+                                advisor: 'R',
+                                tozzini: 'I',
+                                paralegal: ''
+                            }
+                        },
+                        {
+                            id: 3,
+                            text: 'Aprobación de los poderes.',
+                            deadline: '2025-05-19',
+                            status: 'En progreso',
+                            completed: 'No',
+                            newDeadline: '19/05/2025',
+                            date: '28/05/2025',
+                            roles: {
+                                ceo: 'R',
+                                pmo: 'S',
+                                finanzas: 'S',
+                                advisor: 'R',
+                                tozzini: 'I',
+                                paralegal: ''
+                            }
+                        }
+                    ];
+                    saveTasks();
+                }
+                renderTasks();
+            }
+            
+            // Guardar tareas en localStorage
+            function saveTasks() {
+                localStorage.setItem(storageKey, JSON.stringify(tasks));
+            }
+            
+            // Renderizar tareas en la tabla
+            function renderTasks(filteredTasks = null) {
+                const tasksToRender = filteredTasks || tasks;
+                taskBody.innerHTML = '';
+                
+                tasksToRender.forEach(task => {
+                    const row = document.createElement('tr');
+                    
+                    // Determinar color según estado y fecha
+                    let statusClass = '';
+                    if (task.status === 'Completado' || task.completed === 'Sí') {
+                        statusClass = 'status-blue';
+                    } else {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        const deadlineDate = new Date(task.deadline);
+                        deadlineDate.setHours(0, 0, 0, 0);
+                        
+                        const diffTime = deadlineDate - today;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDays < 0) {
+                            statusClass = 'status-red';
+                        } else if (diffDays <= 3) {
+                            statusClass = 'status-yellow';
+                        } else {
+                            statusClass = 'status-green';
+                        }
+                    }
+                    
+                    // Crear células de la fila
+                    row.innerHTML = `
+                        <td class="task-cell">${task.text}</td>
+                        <td>${getRoleDisplay(task.roles.ceo)}</td>
+                        <td>${getRoleDisplay(task.roles.pmo)}</td>
+                        <td>${getRoleDisplay(task.roles.finanzas)}</td>
+                        <td>${getRoleDisplay(task.roles.advisor)}</td>
+                        <td>${getRoleDisplay(task.roles.tozzini)}</td>
+                        <td>${getRoleDisplay(task.roles.paralegal)}</td>
+                        <td class="date-cell">${task.date || ''}</td>
+                        <td class="date-cell">${task.deadline ? formatDate(task.deadline) : ''}</td>
+                        <td>${task.completed}</td>
+                        <td><span class="${statusClass}">${task.status}</span></td>
+                        <td class="date-cell">${task.newDeadline || ''}</td>
+                        <td class="no-print">
+                            <button class="delete-button" data-id="${task.id}">🗑️</button>
+                        </td>
+                    `;
+                    
+                    taskBody.appendChild(row);
+                });
+            }
+            
+            // Mostrar roles RASIC
+            function getRoleDisplay(role) {
+                if (!role) return '';
+                return role;
+            }
+            
+            // Formatear fecha
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            }
+            
+            // Abrir modal para añadir tarea
+            function openAddTaskModal() {
+                modalTitle.textContent = 'Añadir Nueva Tarea';
+                taskForm.reset();
+                currentEditingTask = null;
+                
+                // Establecer fecha predeterminada
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('deadline-date').value = today;
+                
+                taskModal.style.display = 'block';
+            }
+            
+            // Abrir modal para editar tarea
+            function openEditTaskModal(taskId) {
+                const task = tasks.find(t => t.id === taskId);
+                if (!task) return;
+                
+                modalTitle.textContent = 'Editar Tarea';
+                currentEditingTask = task;
+                
+                document.getElementById('task-text').value = task.text;
+                document.getElementById('deadline-date').value = task.deadline;
+                document.getElementById('task-status').value = task.status;
+                document.getElementById('is-completed').value = task.completed;
+                
+                document.getElementById('ceo-role').value = task.roles.ceo || '';
+                document.getElementById('pmo-role').value = task.roles.pmo || '';
+                document.getElementById('finanzas-role').value = task.roles.finanzas || '';
+                document.getElementById('advisor-role').value = task.roles.advisor || '';
+                document.getElementById('tozzini-role').value = task.roles.tozzini || '';
+                document.getElementById('paralegal-role').value = task.roles.paralegal || '';
+                
+                taskModal.style.display = 'block';
+            }
+            
+            // Cerrar modal
+            function closeModal() {
+                taskModal.style.display = 'none';
+            }
+            
+            // Guardar tarea desde el formulario
+            function saveTaskFromForm(e) {
+                e.preventDefault();
+                
+                const text = document.getElementById('task-text').value.trim();
+                const deadline = document.getElementById('deadline-date').value;
+                const status = document.getElementById('task-status').value;
+                const completed = document.getElementById('is-completed').value;
+                
+                const roles = {
+                    ceo: document.getElementById('ceo-role').value,
+                    pmo: document.getElementById('pmo-role').value,
+                    finanzas: document.getElementById('finanzas-role').value,
+                    advisor: document.getElementById('advisor-role').value,
+                    tozzini: document.getElementById('tozzini-role').value,
+                    paralegal: document.getElementById('paralegal-role').value
+                };
+                
+                if (currentEditingTask) {
+                    // Actualizar tarea existente
+                    currentEditingTask.text = text;
+                    currentEditingTask.deadline = deadline;
+                    currentEditingTask.status = status;
+                    currentEditingTask.completed = completed;
+                    currentEditingTask.roles = roles;
+                } else {
+                    // Crear nueva tarea
+                    const newId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+                    const deadlineFormatted = formatDate(deadline);
+                    
+                    const newTask = {
+                        id: newId,
+                        text: text,
+                        deadline: deadline,
+                        status: status,
+                        completed: completed,
+                        newDeadline: deadlineFormatted,
+                        date: new Date().toLocaleDateString('es-ES', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                        }),
+                        roles: roles
+                    };
+                    
+                    tasks.push(newTask);
+                }
+                
+                saveTasks();
+                renderTasks();
+                closeModal();
+            }
+            
+            // Eliminar tarea
+            function deleteTask(taskId) {
+                if (confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {
+                    tasks = tasks.filter(task => task.id !== taskId);
+                    saveTasks();
+                    renderTasks();
+                }
+            }
+            
+            // Filtrar tareas
+            function filterTasks() {
+                const statusValue = statusFilter.value;
+                const dateValue = dateFilter.value;
+                
+                let filtered = [...tasks];
+                
+                // Filtrar por estado
+                if (statusValue !== 'all') {
+                    switch (statusValue) {
+                        case 'pending':
+                            filtered = filtered.filter(task => task.status === 'Pendiente');
+                            break;
+                        case 'in-progress':
+                            filtered = filtered.filter(task => task.status === 'En progreso');
+                            break;
+                        case 'completed':
+                            filtered = filtered.filter(task => task.status === 'Completado' || task.completed === 'Sí');
+                            break;
+                        case 'cancelled':
+                            filtered = filtered.filter(task => task.status === 'Cancelado');
+                            break;
+                    }
+                }
+                
+                // Ordenar por fecha
+                if (dateValue !== 'all') {
+                    switch (dateValue) {
+                        case 'asc':
+                            filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+                            break;
+                        case 'desc':
+                            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+                            break;
+                        case 'deadline':
+                            filtered.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+                            break;
+                    }
+                }
+                
+                renderTasks(filtered);
+            }
+            
+            // Exportar a CSV
+            function exportToCSV() {
+                if (tasks.length === 0) {
+                    alert('No hay tareas para exportar');
+                    return;
+                }
+                
+                let csvContent = "Tarea,CEO,PMO,Finanzas Halotech,Advisor,Tozzini Freire,Paralegal,Fecha,Deadline,Finalizada,Estado,Nuevo DL\n";
+                
+                tasks.forEach(task => {
+                    let row = [
+                        `"${task.text.replace(/"/g, '""')}"`,
+                        `"${task.roles.ceo || ''}"`,
+                        `"${task.roles.pmo || ''}"`,
+                        `"${task.roles.finanzas || ''}"`,
+                        `"${task.roles.advisor || ''}"`,
+                        `"${task.roles.tozzini || ''}"`,
+                        `"${task.roles.paralegal || ''}"`,
+                        `"${task.date || ''}"`,
+                        `"${formatDate(task.deadline)}"`,
+                        `"${task.completed}"`,
+                        `"${task.status}"`,
+                        `"${task.newDeadline || ''}"`
+                    ];
+                    
+                    csvContent += row.join(',') + '\n';
+                });
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'rasic_tareas.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            // Importar desde CSV o Excel
+            function importFromFile() {
+                importFile.click();
+            }
+            
+            function processImportedFile(file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const contents = e.target.result;
+                    const lines = contents.split('\n');
+                    
+                    if (lines.length < 2) {
+                        alert('El archivo no contiene datos válidos');
+                        return;
+                    }
+                    
+                    // Verificar cabeceras
+                    const headers = lines[0].split(',');
+                    if (!headers.includes('Tarea') || !headers.includes('Deadline')) {
+                        alert('Formato de archivo no válido. Debe incluir las cabeceras necesarias.');
+                        return;
+                    }
+                    
+                    // Procesar filas
+                    const newTasks = [];
+                    let maxId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) : 0;
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        
+                        // Parsear CSV considerando comillas
+                        let row = [];
+                        let insideQuotes = false;
+                        let currentValue = '';
+                        
+                        for (let j = 0; j < line.length; j++) {
+                            const char = line[j];
+                            
+                            if (char === '"') {
+                                insideQuotes = !insideQuotes;
+                            } else if (char === ',' && !insideQuotes) {
+                                row.push(currentValue);
+                                currentValue = '';
+                            } else {
+                                currentValue += char;
+                            }
+                        }
+                        
+                        row.push(currentValue); // Último valor
+                        
+                        // Limpiar valores
+                        row = row.map(val => val.replace(/^"|"$/g, ''));
+                        
+                        if (row.length >= 10) {
+                            const taskDate = new Date().toLocaleDateString('es-ES', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                            });
+                            
+                            // Convertir fecha de deadline si es necesario
+                            let deadline = row[8]; // Índice de la columna Deadline
+                            if (deadline && !deadline.includes('-')) {
+                                const parts = deadline.split('/');
+                                if (parts.length === 3) {
+                                    deadline = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                                }
+                            }
+                            
+                            newTasks.push({
+                                id: ++maxId,
+                                text: row[0],
+                                roles: {
+                                    ceo: row[1] || '',
+                                    pmo: row[2] || '',
+                                    finanzas: row[3] || '',
+                                    advisor: row[4] || '',
+                                    tozzini: row[5] || '',
+                                    paralegal: row[6] || ''
+                                },
+                                date: row[7] || taskDate,
+                                deadline: deadline,
+                                completed: row[9] || 'No',
+                                status: row[10] || 'En progreso',
+                                newDeadline: row[11] || formatDate(deadline)
+                            });
+                        }
+                    }
+                    
+                    if (newTasks.length === 0) {
+                        alert('No se encontraron tareas válidas en el archivo');
+                        return;
+                    }
+                    
+                    const action = confirm(`Se importarán ${newTasks.length} tareas. ¿Deseas reemplazar las tareas existentes (OK) o añadirlas (Cancelar)?`);
+                    
+                    if (action) {
+                        // Reemplazar
+                        tasks = newTasks;
+                    } else {
+                        // Añadir
+                        tasks = [...tasks, ...newTasks];
+                    }
+                    
+                    saveTasks();
+                    renderTasks();
+                    alert(`Se importaron ${newTasks.length} tareas correctamente`);
+                };
+                
+                reader.readAsText(file);
+            }
+            
+            // Imprimir
+            function printTable() {
+                window.print();
+            }
+            
+            // Mostrar recordatorios
+            function showReminders() {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const pendingTasks = tasks.filter(task => {
+                    if (task.status === 'Completado' || task.completed === 'Sí') return false;
+                    
+                    const deadlineDate = new Date(task.deadline);
+                    deadlineDate.setHours(0, 0, 0, 0);
+                    
+                    const diffTime = deadlineDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    return diffDays <= 7; // Tareas que vencen en 7 días o menos
+                });
+                
+                if (pendingTasks.length === 0) {
+                    alert('No hay tareas próximas a vencer en los próximos 7 días.');
+                    return;
+                }
+                
+                let message = 'Tareas próximas a vencer:\n\n';
+                
+                pendingTasks.forEach(task => {
+                    const deadlineDate = new Date(task.deadline);
+                    const diffTime = deadlineDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    let status = '';
+                    if (diffDays < 0) {
+                        status = '🔴 VENCIDA';
+                    } else if (diffDays === 0) {
+                        status = '🟠 VENCE HOY';
+                    } else if (diffDays <= 3) {
+                        status = '🟡 PRONTO A VENCER';
+                    } else {
+                        status = '🟢 EN PLAZO';
+                    }
+                    
+                    message += `${status}: ${task.text.substring(0, 50)}${task.text.length > 50 ? '...' : ''} (${formatDate(task.deadline)})\n`;
+                });
+                
+                alert(message);
+            }
+            
+            // Event Listeners
+            addTaskBtn.addEventListener('click', openAddTaskModal);
+            
+            saveBtn.addEventListener('click', function() {
+                saveTasks();
+                alert('Datos guardados correctamente');
+            });
+            
+            printBtn.addEventListener('click', printTable);
+            
+            exportBtn.addEventListener('click', exportToCSV);
+            
+            importBtn.addEventListener('click', importFromFile);
+            
+            importFile.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    processImportedFile(this.files[0]);
+                    this.value = '';
+                }
+            });
+            
+            closeBtn.addEventListener('click', closeModal);
+            
+            window.addEventListener('click', function(e) {
+                if (e.target === taskModal) {
+                    closeModal();
+                }
+            });
+            
+            taskForm.addEventListener('submit', saveTaskFromForm);
+            
+            statusFilter.addEventListener('change', filterTasks);
+            dateFilter.addEventListener('change', filterTasks);
+            remindersBtn.addEventListener('click', showReminders);
+            
+            // Delegación de eventos para botones de editar/eliminar
+            taskBody.addEventListener('click', function(e) {
+                // Detectar clic en botón eliminar
+                if (e.target.classList.contains('delete-button')) {
+                    const taskId = parseInt(e.target.getAttribute('data-id'));
+                    deleteTask(taskId);
+                }
+                
+                // Detectar clic en fila para editar
+                if (e.target.tagName === 'TD' && !e.target.classList.contains('no-print')) {
+                    const row = e.target.closest('tr');
+                    if (!row) return;
+                    
+                    const cells = row.cells;
+                    if (cells.length < 12) return;
+                    
+                    const taskId = parseInt(row.querySelector('.delete-button').getAttribute('data-id'));
+                    openEditTaskModal(taskId);
+                }
+            });
+            
+            // Inicializar
+            loadTasks();
+        });
+    </script>
+</body>
+</html>

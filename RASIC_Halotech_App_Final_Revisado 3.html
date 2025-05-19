@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App RASIC Halotech – Versión Revisada</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body class="p-4 bg-gray-100">
+  <h1 class="text-2xl font-bold mb-2 text-center">App RASIC Halotech – Versión Revisada</h1>
+  <div class="bg-blue-100 p-4 rounded mb-4">
+    <h2 class="text-md font-semibold mb-1">Instrucciones de uso</h2>
+    <ul class="text-sm list-disc list-inside">
+      <li>Edita las tareas directamente en la tabla.</li>
+      <li>Asigna roles RASIC mediante los menús desplegables.</li>
+      <li>Establece un "Deadline" para activar los semáforos automáticos.</li>
+      <li>Marca la tarea como finalizada para archivar (🔵).</li>
+      <li>Si la tarea está vencida, se genera automáticamente un correo de seguimiento.</li>
+      <li>Haz clic en 💾 para guardar y en 🖨️ para imprimir.</li>
+      <li>Para eliminar una tarea, introduce la contraseña: <strong>TuCa1965</strong>.</li>
+    </ul>
+    <p class="mt-2 text-sm font-semibold" id="fechaHoy"></p>
+  </div>
+  <div class="flex flex-wrap gap-2 justify-center mb-4">
+    <button onclick="agregarFila()" class="p-2 bg-green-500 text-white rounded">➕ Añadir Tarea</button>
+    <button onclick="guardarTodo()" class="p-2 bg-purple-600 text-white rounded">💾 Guardar</button>
+    <button onclick="window.print()" class="p-2 bg-blue-500 text-white rounded">🖨️ Imprimir</button>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white shadow-md rounded-lg text-xs">
+      <thead class="bg-blue-500 text-white">
+        <tr>
+          <th class="p-2 border w-[600px]">Tarea</th>
+          <th class="p-2 border">CEO</th>
+          <th class="p-2 border">PMO</th>
+          <th class="p-2 border">CFO</th>
+          <th class="p-2 border">COO</th>
+          <th class="p-2 border">HHRR</th>
+          <th class="p-2 border">Advisor</th>
+          <th class="p-2 border">Legal</th>
+          <th class="p-2 border">Consejo</th>
+          <th class="p-2 border">Fecha</th>
+          <th class="p-2 border">Deadline</th>
+          <th class="p-2 border">Finalizada</th>
+          <th class="p-2 border">Estado</th>
+          <th class="p-2 border">Nuevo DL</th>
+          <th class="p-2 border">🗑️</th>
+        </tr>
+      </thead>
+      <tbody id="tablaRasic"></tbody>
+    </table>
+  </div>
+  <div class="mt-6">
+    <h2 class="text-xl font-bold text-center">Correo de Seguimiento</h2>
+    <textarea id="emailTexto" class="w-full p-2 border rounded h-32 text-xs mt-2" placeholder="Se generará automáticamente si una tarea está vencida..."></textarea>
+    <div class="flex gap-2 mt-2 justify-center">
+      <button onclick="cortarTexto()" class="p-2 bg-gray-600 text-white rounded">✉️ Copiar y Abrir Email</button>
+    </div>
+  </div>
+<script>
+const tareas = [
+  "El socio extranjero debe proporcionar documentos que acrediten su existencia y buena reputación",
+  "Borrador de poderes: fiscal y societario",
+  "Aprobación de los poderes",
+  "Entrega de organigrama, pasaporte y prueba del cargo del firmante",
+  "Traducción jurada de documentos 1.1–1.4",
+  "Registro del socio en el CNPJ/MF",
+  "Definir nombre, domicilio, objeto, capital, administradores, gobernanza",
+  "Redacción de estatutos sociales",
+  "Registro de estatutos ante la Junta Comercial",
+  "Obtención de licencia municipal permanente",
+  "Selección de Organización Certificadora Designada (OCD)",
+  "Envío de información técnica del producto",
+  "Análisis de especificaciones técnicas por la OCD",
+  "Envío de muestra a laboratorio acreditado",
+  "Recepción del informe de ensayos",
+  "Emisión del Certificado de Conformidad",
+  "Registro del certificado en el sistema de ANATEL",
+  "Análisis final por ANATEL para emitir homologación"
+];
+
+function crearFila(tarea) {
+  const roles = ["", "R", "A", "S", "C", "I"];
+  const tr = document.createElement("tr");
+  tr.className = "text-center border text-xs";
+  tr.innerHTML = `
+    <td class="p-2 border"><textarea class="w-full p-1 border rounded resize-y" rows="2">${tarea}</textarea></td>
+    ${Array(8).fill("").map(() => `
+      <td class="p-2 border">
+        <select class="w-full p-1 border rounded text-xs">
+          ${roles.map(r => `<option>${r}</option>`).join("")}
+        </select>
+      </td>`).join("")}
+    <td class="p-2 border">${new Date().toISOString().split("T")[0]}</td>
+    <td class="p-2 border"><input type="date" class="w-full p-1 border rounded" onchange="actualizarSemaforo(this)"></td>
+    <td class="p-2 border">
+      <select onchange="actualizarFinalizada(this)" class="w-full p-1 border rounded">
+        <option>No</option><option>Si</option>
+      </select>
+    </td>
+    <td class="p-2 border semaforo">⚪</td>
+    <td class="p-2 border"><input type="date" class="w-full p-1 border rounded" disabled></td>
+    <td class="p-2 border"><button onclick="protegerEliminacion(this)" class="text-red-600">🗑️</button></td>
+  `;
+  return tr;
+}
+
+function cargarTareas() {
+  const tbody = document.getElementById("tablaRasic");
+  tbody.innerHTML = "";
+  tareas.forEach(t => tbody.appendChild(crearFila(t)));
+}
+
+function agregarFila() {
+  document.getElementById("tablaRasic").appendChild(crearFila(""));
+}
+
+function actualizarSemaforo(input) {
+  const row = input.closest("tr");
+  const deadline = new Date(input.value);
+  const hoy = new Date();
+  const diff = (deadline - hoy) / (1000 * 60 * 60 * 24);
+  const semaforo = row.querySelector(".semaforo");
+  const tarea = row.querySelector("textarea").value;
+  const nuevoDL = row.cells[13].querySelector("input");
+  const email = document.getElementById("emailTexto");
+
+  if (diff > 15) {
+    semaforo.textContent = "🟢";
+    row.style.backgroundColor = "#d1fae5";
+    nuevoDL.disabled = true;
+  } else if (diff >= 0) {
+    semaforo.textContent = "🟡";
+    row.style.backgroundColor = "#fef3c7";
+    nuevoDL.disabled = true;
+  } else {
+    semaforo.textContent = "🔴";
+    row.style.backgroundColor = "#fecaca";
+    nuevoDL.disabled = false;
+    email.value = `Estimado responsable,
+
+La tarea "${tarea}" ha sobrepasado su fecha límite.
+Por favor, indique:
+
+- Motivo del retraso
+- Acción correctora
+- Nuevo deadline propuesto
+
+Gracias,
+Equipo de Gestión`;
+  }
+}
+
+function actualizarFinalizada(select) {
+  const row = select.closest("tr");
+  const tarea = row.querySelector("textarea");
+  const semaforo = row.querySelector(".semaforo");
+
+  if (select.value === "Si") {
+    tarea.style.textDecoration = "line-through";
+    semaforo.textContent = "🔵";
+    row.style.backgroundColor = "#cce4f7";
+  } else {
+    tarea.style.textDecoration = "none";
+    semaforo.textContent = "⚪";
+    row.style.backgroundColor = "";
+  }
+}
+
+function protegerEliminacion(btn) {
+  const pw = prompt("Contraseña para eliminar:");
+  if (pw === "TuCa1965") {
+    btn.closest("tr").remove();
+  } else {
+    alert("Contraseña incorrecta.");
+  }
+}
+
+function guardarTodo() {
+  alert("Guardado simulado. Puedes activar LocalStorage si lo necesitas.");
+}
+
+function cortarTexto() {
+  const txt = document.getElementById("emailTexto").value;
+  navigator.clipboard.writeText(txt);
+  const asunto = encodeURIComponent("Seguimiento de tarea retrasada");
+  const cuerpo = encodeURIComponent(txt);
+  window.open("mailto:?subject=" + asunto + "&body=" + cuerpo, "_blank");
+  document.getElementById("emailTexto").value = "";
+}
+
+window.onload = () => {
+  document.getElementById("fechaHoy").textContent = "Fecha de hoy: " + new Date().toISOString().split("T")[0];
+  cargarTareas();
+};
+</script>
+</body>
+</html>

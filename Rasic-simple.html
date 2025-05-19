@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RASIC Simple - Halotech Brasil</title>
+    <style>
+        /* Estilos base */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f0f0;
+            padding: 10px;
+        }
+        
+        header {
+            background-color: #2196F3;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        .date {
+            margin-top: 10px;
+            background-color: rgba(0,0,0,0.1);
+            padding: 5px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #0b7dda;
+        }
+        
+        .btn-add { background-color: #4CAF50; }
+        .btn-add:hover { background-color: #3e8e41; }
+        
+        .btn-danger { background-color: #f44336; }
+        .btn-danger:hover { background-color: #d32f2f; }
+        
+        /* Estilo para tarjetas (móvil) */
+        .task-card {
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .task-header {
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        .task-body {
+            margin-bottom: 10px;
+        }
+        
+        .task-body div {
+            margin-bottom: 5px;
+        }
+        
+        .task-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 5px;
+        }
+        
+        /* Estilo para tabla (escritorio) */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            background-color: white;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 15px auto;
+            padding: 15px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .modal-footer {
+            text-align: right;
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        
+        /* Responsive */
+        .desktop-view { display: block; }
+        .mobile-view { display: none; }
+        
+        @media (max-width: 768px) {
+            .desktop-view { display: none; }
+            .mobile-view { display: block; }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .controls button {
+                margin-bottom: 5px;
+            }
+        }
+        
+        /* Notification */
+        #notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>RASIC - Halotech Brasil</h1>
+        <div class="date" id="current-date"></div>
+    </header>
+    
+    <div class="controls">
+        <button class="btn-add" onclick="openAddModal()">Agregar Tarea</button>
+        <button onclick="exportTasks()">Exportar CSV</button>
+        <button onclick="document.getElementById('import-file').click()">Importar CSV</button>
+        <input type="file" id="import-file" accept=".csv" style="display:none" onchange="importTasks(event)">
+        <button onclick="window.print()">Imprimir</button>
+    </div>
+    
+    <!-- Vista de escritorio -->
+    <div class="desktop-view">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tarea</th>
+                    <th>Responsable (R)</th>
+                    <th>Accountable (A)</th>
+                    <th>Support (S)</th>
+                    <th>Informed (I)</th>
+                    <th>Consulted (C)</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Datos generados dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Vista móvil -->
+    <div class="mobile-view">
+        <div id="cards-container">
+            <!-- Tarjetas generadas dinámicamente -->
+        </div>
+    </div>
+    
+    <div id="no-tasks" style="text-align:center; padding:20px; background:white; border-radius:5px; display:none;">
+        No hay tareas. Agregue una nueva tarea para comenzar.
+    </div>
+    
+    <!-- Modal de tarea -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Agregar Tarea</h2>
+                <span class="close" onclick="closeTaskModal()">&times;</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="task-name">Nombre de la Tarea:</label>
+                <input type="text" id="task-name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="task-date">Fecha Límite:</label>
+                <input type="date" id="task-date" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="task-responsible">Responsable (R):</label>
+                <select id="task-responsible">
+                    <option value="">Seleccione...</option>
+                    <option value="CEO">CEO</option>
+                    <option value="PMO">PMO</option>
+                    <option value="Advisor">Advisor</option>
+                    <option value="Finanzas">Finanzas</option>
+                    <option value="Tozzini Freire">Tozzini Freire</option>
+                    <option value="Paralegal">Paralegal</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="task-accountable">Accountable (A):</label>
+                <select id="task-accountable">
+                    <option value="">Seleccione...</option>
+                    <option value="CEO">CEO</option>
+                    <option value="PMO">PMO</option>
+                    <option value="Advisor">Advisor</option>
+                    <option value="Finanzas">Finanzas</option>
+                    <option value="Tozzini Freire">Tozzini Freire</option>
+                    <option value="Paralegal">Paralegal</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="task-support">Support (S):</label>
+                <select id="task-support" multiple size="3">
+                    <option value="CEO">CEO</option>
+                    <option value="PMO">PMO</option>
+                    <option value="Advisor">Advisor</option>
+                    <option value="Finanzas">Finanzas</option>
+                    <option value="Tozzini Freire">Tozzini Freire</option>
+                    <option value="Paralegal">Paralegal</option>
+                </select>
+                <small>Ctrl+clic para seleccionar múltiples</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="task-informed">Informed (I):</label>
+                <select id="task-informed" multiple size="3">
+                    <option value="CEO">CEO</option>
+                    <option value="PMO">PMO</option>
+                    <option value="Advisor">Advisor</option>
+                    <option value="Finanzas">Finanzas</option>
+                    <option value="Tozzini Freire">Tozzini Freire</option>
+                    <option value="Paralegal">Paralegal</option>
+                </select>
+                <small>Ctrl+clic para seleccionar múltiples</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="task-consulted">Consulted (C):</label>
+                <select id="task-consulted" multiple size="3">
+                    <option value="CEO">CEO</option>
+                    <option value="PMO">PMO</option>
+                    <option value="Advisor">Advisor</option>
+                    <option value="Finanzas">Finanzas</option>
+                    <option value="Tozzini Freire">Tozzini Freire</option>
+                    <option value="Paralegal">Paralegal</option>
+                </select>
+                <small>Ctrl+clic para seleccionar múltiples</small>
+            </div>
+            
+            <div class="modal-footer">
+                <button onclick="closeTaskModal()">Cancelar</button>
+                <button class="btn-add" onclick="saveTask()">Guardar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notificación -->
+    <div id="notification"></div>
+    
+    <script>
+        // Variables globales
+        let tasks = [];
+        let currentTaskId = null;
+        
+        // Inicializar la aplicación cuando se carga la página
+        window.onload = function() {
+            updateDate();
+            loadTasks();
+            renderTasks();
+        };
+        
+        // Actualizar la fecha actual
+        function updateDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('es-ES', options);
+        }
+        
+        // Cargar tareas desde localStorage
+        function loadTasks() {
+            try {
+                const savedTasks = localStorage.getItem('rasicTasks');
+                if (savedTasks) {
+                    tasks = JSON.parse(savedTasks);
+                    console.log(`Cargadas ${tasks.length} tareas`);
+                }
+            } catch (e) {
+                console.error("Error cargando tareas:", e);
+                tasks = [];
+            }
+        }
+        
+        // Guardar tareas en localStorage
+        function saveTasks() {
+            try {
+                localStorage.setItem('rasicTasks', JSON.stringify(tasks));
+                console.log(`Guardadas ${tasks.length} tareas`);
+            } catch (e) {
+                console.error("Error guardando tareas:", e);
+                showNotification("Error al guardar las tareas");
+            }
+        }
+        
+        // Mostrar las tareas en la interfaz
+        function renderTasks() {
+            const tableBody = document.getElementById('table-body');
+            const cardsContainer = document.getElementById('cards-container');
+            const noTasksElement = document.getElementById('no-tasks');
+            
+            // Limpiar contenedores
+            tableBody.innerHTML = '';
+            cardsContainer.innerHTML = '';
+            
+            // Mostrar mensaje si no hay tareas
+            if (tasks.length === 0) {
+                noTasksElement.style.display = 'block';
+                return;
+            } else {
+                noTasksElement.style.display = 'none';
+            }
+            
+            // Renderizar cada tarea
+            tasks.forEach(task => {
+                // Vista de tabla (escritorio)
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${task.name}</td>
+                    <td>${task.responsible || '-'}</td>
+                    <td>${task.accountable || '-'}</td>
+                    <td>${formatList(task.support)}</td>
+                    <td>${formatList(task.informed)}</td>
+                    <td>${formatList(task.consulted)}</td>
+                    <td>${formatDate(task.dueDate)}</td>
+                    <td>
+                        <button onclick="editTask('${task.id}')">Editar</button>
+                        ${!task.completed ? `<button onclick="completeTask('${task.id}')">Completar</button>` : ''}
+                        <button class="btn-danger" onclick="deleteTask('${task.id}')">Eliminar</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+                
+                // Vista de tarjeta (móvil)
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                card.innerHTML = `
+                    <div class="task-header">
+                        <span>${task.name}</span>
+                        <span>${task.completed ? 'Completada' : 'Pendiente'}</span>
+                    </div>
+                    <div class="task-body">
+                        <div><strong>Fecha:</strong> ${formatDate(task.dueDate)}</div>
+                        <div><strong>R:</strong> ${task.responsible || '-'}</div>
+                        <div><strong>A:</strong> ${task.accountable || '-'}</div>
+                        <div><strong>S:</strong> ${formatList(task.support)}</div>
+                        <div><strong>I:</strong> ${formatList(task.informed)}</div>
+                        <div><strong>C:</strong> ${formatList(task.consulted)}</div>
+                    </div>
+                    <div class="task-actions">
+                        <button onclick="editTask('${task.id}')">Editar</button>
+                        ${!task.completed ? `<button onclick="completeTask('${task.id}')">Completar</button>` : ''}
+                        <button class="btn-danger" onclick="deleteTask('${task.id}')">Eliminar</button>
+                    </div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        }
+        
+        // Formatear lista para mostrar
+        function formatList(list) {
+            if (!list || !Array.isArray(list) || list.length === 0) return '-';
+            return list.join(', ');
+        }
+        
+        // Formatear fecha
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('es-ES');
+        }
+        
+        // Abrir modal para agregar tarea
+        function openAddModal() {
+            document.getElementById('modal-title').textContent = 'Agregar Tarea';
+            document.getElementById('task-name').value = '';
+            document.getElementById('task-responsible').value = '';
+            document.getElementById('task-accountable').value = '';
+            resetMultiSelect('task-support');
+            resetMultiSelect('task-informed');
+            resetMultiSelect('task-consulted');
+            
+            // Fecha actual como predeterminada
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('task-date').value = today;
+            
+            currentTaskId = null;
+            document.getElementById('task-modal').style.display = 'block';
+        }
+        
+        // Abrir modal para editar tarea
+        function editTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            document.getElementById('modal-title').textContent = 'Editar Tarea';
+            document.getElementById('task-name').value = task.name;
+            document.getElementById('task-date').value = task.dueDate;
+            document.getElementById('task-responsible').value = task.responsible || '';
+            document.getElementById('task-accountable').value = task.accountable || '';
+            
+            // Establecer selecciones múltiples
+            setMultiSelect('task-support', task.support);
+            setMultiSelect('task-informed', task.informed);
+            setMultiSelect('task-consulted', task.consulted);
+            
+            currentTaskId = taskId;
+            document.getElementById('task-modal').style.display = 'block';
+        }
+        
+        // Cerrar modal de tarea
+        function closeTaskModal() {
+            document.getElementById('task-modal').style.display = 'none';
+        }
+        
+        // Resetear select múltiple
+        function resetMultiSelect(id) {
+            const select = document.getElementById(id);
+            for (let i = 0; i < select.options.length; i++) {
+                select.options[i].selected = false;
+            }
+        }
+        
+        // Establecer valores en select múltiple
+        function setMultiSelect(id, values) {
+            resetMultiSelect(id);
+            if (!values || !Array.isArray(values)) return;
+            
+            const select = document.getElementById(id);
+            for (let i = 0; i < select.options.length; i++) {
+                if (values.includes(select.options[i].value)) {
+                    select.options[i].selected = true;
+                }
+            }
+        }
+        
+        // Obtener valores de select múltiple
+        function getMultiSelectValues(id) {
+            const select = document.getElementById(id);
+            const result = [];
+            
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].selected) {
+                    result.push(select.options[i].value);
+                }
+            }
+            
+            return result;
+        }
+        
+        // Guardar tarea
+        function saveTask() {
+            const name = document.getElementById('task-name').value;
+            const dueDate = document.getElementById('task-date').value;
+            
+            if (!name || !dueDate) {
+                showNotification("Por favor complete los campos requeridos");
+                return;
+            }
+            
+            const task = {
+                id: currentTaskId || Date.now().toString(),
+                name: name,
+                dueDate: dueDate,
+                responsible: document.getElementById('task-responsible').value,
+                accountable: document.getElementById('task-accountable').value,
+                support: getMultiSelectValues('task-support'),
+                informed: getMultiSelectValues('task-informed'),
+                consulted: getMultiSelectValues('task-consulted'),
+                completed: false
+            };
+            
+            if (currentTaskId) {
+                // Editar tarea existente
+                const index = tasks.findIndex(t => t.id === currentTaskId);
+                if (index !== -1) {
+                    // Mantener estado completado
+                    task.completed = tasks[index].completed;
+                    tasks[index] = task;
+                }
+                showNotification("Tarea actualizada correctamente");
+            } else {
+                // Agregar nueva tarea
+                tasks.push(task);
+                showNotification("Tarea agregada correctamente");
+            }
+            
+            saveTasks();
+            renderTasks();
+            closeTaskModal();
+        }
+        
+        // Completar tarea
+        function completeTask(taskId) {
+            const index = tasks.findIndex(t => t.id === taskId);
+            if (index !== -1) {
+                tasks[index].completed = true;
+                saveTasks();
+                renderTasks();
+                showNotification("Tarea marcada como completada");
+            }
+        }
+        
+        // Eliminar tarea
+        function deleteTask(taskId) {
+            if (confirm("¿Está seguro de que desea eliminar esta tarea?")) {
+                const index = tasks.findIndex(t => t.id === taskId);
+                if (index !== -1) {
+                    tasks.splice(index, 1);
+                    saveTasks();
+                    renderTasks();
+                    showNotification("Tarea eliminada correctamente");
+                }
+            }
+        }
+        
+        // Mostrar notificación
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            setTimeout(function() {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Exportar tareas a CSV
+        function exportTasks() {
+            if (tasks.length === 0) {
+                showNotification("No hay tareas para exportar");
+                return;
+            }
+            
+            let csv = "Nombre,Fecha Límite,Responsable,Accountable,Support,Informed,Consulted,Completada\n";
+            
+            tasks.forEach(task => {
+                const row = [
+                    escapeCSV(task.name),
+                    task.dueDate,
+                    escapeCSV(task.responsible || ''),
+                    escapeCSV(task.accountable || ''),
+                    escapeCSV(formatList(task.support)),
+                    escapeCSV(formatList(task.informed)),
+                    escapeCSV(formatList(task.consulted)),
+                    task.completed ? 'Sí' : 'No'
+                ];
+                
+                csv += row.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "tareas_rasic.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification("Tareas exportadas correctamente");
+        }
+        
+        // Escapar texto para CSV
+        function escapeCSV(text) {
+            if (!text || text === '-') return '';
+            text = String(text);
+            if (text.includes(',') || text.includes('"')) {
+                return '"' + text.replace(/"/g, '""') + '"';
+            }
+            return text;
+        }
+        
+        // Importar tareas desde CSV
+        function importTasks(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const contents = e.target.result;
+                const lines = contents.split('\n');
+                
+                if (lines.length < 2) {
+                    showNotification("El archivo no contiene datos");
+                    return;
+                }
+                
+                if (confirm(`¿Desea importar ${lines.length - 1} tareas? Esto reemplazará las tareas actuales.`)) {
+                    const newTasks = [];
+                    
+                    // Comenzar desde la línea 1 (la primera es la cabecera)
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        
+                        const cols = line.split(',');
+                        if (cols.length < 2) continue;
+                        
+                        newTasks.push({
+                            id: Date.now().toString() + i,
+                            name: unescapeCSV(cols[0]),
+                            dueDate: cols[1],
+                            responsible: cols.length > 2 ? unescapeCSV(cols[2]) : '',
+                            accountable: cols.length > 3 ? unescapeCSV(cols[3]) : '',
+                            support: cols.length > 4 && cols[4] ? unescapeCSV(cols[4]).split(';').map(s => s.trim()) : [],
+                            informed: cols.length > 5 && cols[5] ? unescapeCSV(cols[5]).split(';').map(s => s.trim()) : [],
+                            consulted: cols.length > 6 && cols[6] ? unescapeCSV(cols[6]).split(';').map(s => s.trim()) : [],
+                            completed: cols.length > 7 && cols[7] === 'Sí'
+                        });
+                    }
+                    
+                    if (newTasks.length === 0) {
+                        showNotification("No se pudieron importar tareas");
+                        return;
+                    }
+                    
+                    tasks = newTasks;
+                    saveTasks();
+                    renderTasks();
+                    showNotification(`${newTasks.length} tareas importadas correctamente`);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Resetear input
+        }
+        
+        // Desescapar texto de CSV
+        function unescapeCSV(text) {
+            if (!text) return '';
+            if (text.startsWith('"') && text.endsWith('"')) {
+                return text.substring(1, text.length - 1).replace(/""/g, '"');
+            }
+            return text;
+        }
+    </script>
+</body>
+</html>

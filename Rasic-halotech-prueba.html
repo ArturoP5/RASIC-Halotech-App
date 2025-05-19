@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RASIC - Halotech Brasil (Versión Escritorio)</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        /* Header */
+        header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .app-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .date-display {
+            background-color: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        /* Controles */
+        .controls {
+            background-color: white;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .controls h2 {
+            margin: 0;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* Botones */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: #1a73e8;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1557b0;
+        }
+        
+        .btn-success {
+            background-color: #0f9d58;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #0b8043;
+        }
+        
+        .btn-danger {
+            background-color: #d93025;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #b3261e;
+        }
+        
+        .btn-warning {
+            background-color: #f9ab00;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e09600;
+        }
+        
+        .btn-info {
+            background-color: #4285f4;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background-color: #3367d6;
+        }
+        
+        .btn-secondary {
+            background-color: #5f6368;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #494c51;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .btn i {
+            margin-right: 5px;
+        }
+        
+        /* Tabla */
+        .table-container {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #5f6368;
+            white-space: nowrap;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        tr.completed {
+            background-color: #e8f0fe;
+        }
+        
+        /* Estados de tareas */
+        .status {
+            display: flex;
+            align-items: center;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            display: inline-block;
+        }
+        
+        .status-green { background-color: #0f9d58; }
+        .status-yellow { background-color: #f9ab00; }
+        .status-red { background-color: #d93025; }
+        .status-blue { background-color: #4285f4; }
+        .status-gray { background-color: #9aa0a6; }
+        
+        /* Modal */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #202124;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #5f6368;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            max-height: calc(90vh - 130px);
+            overflow-y: auto;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* Formulario */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #202124;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+        
+        .form-help {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 4px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        /* Notificación */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #323232;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1100;
+            display: none;
+            animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+            max-width: 300px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        /* Mensaje de no tareas */
+        .no-tasks {
+            text-align: center;
+            padding: 30px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .no-tasks h3 {
+            color: #5f6368;
+            margin-bottom: 10px;
+        }
+        
+        /* Diálogo de Email */
+        .email-dialog {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .email-dialog h3 {
+            margin-top: 0;
+        }
+        
+        /* Impresión */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body {
+                background-color: white;
+            }
+            
+            .container {
+                width: 100%;
+                max-width: none;
+            }
+            
+            table, tr, td, th {
+                page-break-inside: avoid;
+            }
+            
+            .table-container {
+                box-shadow: none;
+                border: 1px solid #dadce0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="no-print">
+        <div class="container header-content">
+            <h1 class="app-title">RASIC - Halotech Brasil</h1>
+            <div class="date-display" id="current-date"></div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Controls Section -->
+        <section class="controls no-print">
+            <h2>Gestión de Tareas</h2>
+            <div class="btn-group">
+                <button id="add-task-btn" class="btn btn-success">
+                    <i>+</i> Agregar Tarea
+                </button>
+                <button id="export-btn" class="btn btn-primary">
+                    <i>↓</i> Exportar CSV
+                </button>
+                <button id="import-btn" class="btn btn-info">
+                    <i>↑</i> Importar CSV
+                </button>
+                <input type="file" id="import-file" accept=".csv" style="display: none;">
+                <button id="print-btn" class="btn btn-secondary">
+                    <i>🖨️</i> Imprimir
+                </button>
+            </div>
+        </section>
+
+        <!-- Tasks Table -->
+        <section class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tarea</th>
+                        <th>Responsable (R)</th>
+                        <th>Accountable (A)</th>
+                        <th>Support (S)</th>
+                        <th>Informed (I)</th>
+                        <th>Consulted (C)</th>
+                        <th>Fecha Límite</th>
+                        <th>Estado</th>
+                        <th class="no-print">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tasks-table-body">
+                    <!-- Tareas se cargarán aquí dinámicamente -->
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Mensaje de no tareas -->
+        <div id="no-tasks" class="no-tasks" style="display: none;">
+            <h3>No hay tareas disponibles</h3>
+            <p>Haga clic en "Agregar Tarea" para comenzar.</p>
+        </div>
+    </main>
+
+    <!-- Task Modal -->
+    <div class="modal-backdrop" id="task-modal-backdrop">
+        <div class="modal" id="task-modal">
+            <div class="modal-header">
+                <h3 id="task-modal-title">Agregar Tarea</h3>
+                <button class="modal-close" id="close-task-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="task-form">
+                    <input type="hidden" id="task-id">
+                    
+                    <div class="form-group">
+                        <label for="task-name" class="form-label">Nombre de la Tarea</label>
+                        <input type="text" id="task-name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="task-description" class="form-label">Descripción</label>
+                        <textarea id="task-description" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="task-due-date" class="form-label">Fecha Límite</label>
+                        <input type="date" id="task-due-date" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Roles RASIC</label>
+                        <div class="form-grid">
+                            <!-- Responsible -->
+                            <div class="form-group">
+                                <label for="task-responsible" class="form-label">Responsable (R)</label>
+                                <select id="task-responsible" class="form-control">
+                                    <option value="">Seleccione...</option>
+                                    <option value="CEO">CEO</option>
+                                    <option value="PMO">PMO</option>
+                                    <option value="Advisor">Advisor</option>
+                                    <option value="Finanzas">Finanzas</option>
+                                    <option value="Tozzini Freire">Tozzini Freire</option>
+                                    <option value="Paralegal">Paralegal</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Accountable -->
+                            <div class="form-group">
+                                <label for="task-accountable" class="form-label">Accountable (A)</label>
+                                <select id="task-accountable" class="form-control">
+                                    <option value="">Seleccione...</option>
+                                    <option value="CEO">CEO</option>
+                                    <option value="PMO">PMO</option>
+                                    <option value="Advisor">Advisor</option>
+                                    <option value="Finanzas">Finanzas</option>
+                                    <option value="Tozzini Freire">Tozzini Freire</option>
+                                    <option value="Paralegal">Paralegal</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Support -->
+                        <div class="form-group">
+                            <label for="task-support" class="form-label">Support (S)</label>
+                            <select id="task-support" class="form-control" multiple size="3">
+                                <option value="CEO">CEO</option>
+                                <option value="PMO">PMO</option>
+                                <option value="Advisor">Advisor</option>
+                                <option value="Finanzas">Finanzas</option>
+                                <option value="Tozzini Freire">Tozzini Freire</option>
+                                <option value="Paralegal">Paralegal</option>
+                            </select>
+                            <div class="form-help">Ctrl+clic para selección múltiple</div>
+                        </div>
+                        
+                        <!-- Informed -->
+                        <div class="form-group">
+                            <label for="task-informed" class="form-label">Informed (I)</label>
+                            <select id="task-informed" class="form-control" multiple size="3">
+                                <option value="CEO">CEO</option>
+                                <option value="PMO">PMO</option>
+                                <option value="Advisor">Advisor</option>
+                                <option value="Finanzas">Finanzas</option>
+                                <option value="Tozzini Freire">Tozzini Freire</option>
+                                <option value="Paralegal">Paralegal</option>
+                            </select>
+                            <div class="form-help">Ctrl+clic para selección múltiple</div>
+                        </div>
+                        
+                        <!-- Consulted -->
+                        <div class="form-group">
+                            <label for="task-consulted" class="form-label">Consulted (C)</label>
+                            <select id="task-consulted" class="form-control" multiple size="3">
+                                <option value="CEO">CEO</option>
+                                <option value="PMO">PMO</option>
+                                <option value="Advisor">Advisor</option>
+                                <option value="Finanzas">Finanzas</option>
+                                <option value="Tozzini Freire">Tozzini Freire</option>
+                                <option value="Paralegal">Paralegal</option>
+                            </select>
+                            <div class="form-help">Ctrl+clic para selección múltiple</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-task" class="btn btn-secondary">Cancelar</button>
+                <button id="save-task" class="btn btn-primary">Guardar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirm Modal -->
+    <div class="modal-backdrop" id="confirm-modal-backdrop">
+        <div class="modal" id="confirm-modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 id="confirm-title">Confirmar</h3>
+                <button class="modal-close" id="close-confirm-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-confirm" class="btn btn-secondary">Cancelar</button>
+                <button id="confirm-action" class="btn btn-danger">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Email Modal -->
+    <div class="modal-backdrop" id="email-modal-backdrop">
+        <div class="email-dialog">
+            <h3>Enviar Correo</h3>
+            <p>Se abrirá su cliente de correo electrónico con un mensaje predefinido para:</p>
+            <p><strong id="email-recipient"></strong></p>
+            <div style="margin-top: 20px; text-align: right;">
+                <button id="cancel-email" class="btn btn-secondary">Cancelar</button>
+                <button id="send-email" class="btn btn-primary">Continuar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Variables globales
+        let tasks = [];
+        let currentTaskId = null;
+        let confirmCallback = null;
+        
+        // Inicialización al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inicializando aplicación RASIC...');
+            
+            // Actualizar fecha actual
+            updateCurrentDate();
+            
+            // Cargar tareas desde localStorage
+            loadTasks();
+            
+            // Renderizar tareas
+            renderTasks();
+            
+            // Configurar event listeners
+            setupEventListeners();
+            
+            console.log('Aplicación RASIC inicializada correctamente');
+        });
+        
+        // Actualizar y mostrar la fecha actual
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('es-ES', options);
+        }
+        
+        // Configurar todos los event listeners
+        function setupEventListeners() {
+            // Botones principales
+            document.getElementById('add-task-btn').addEventListener('click', () => openTaskModal());
+            document.getElementById('export-btn').addEventListener('click', exportTasks);
+            document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+            document.getElementById('import-file').addEventListener('change', importTasks);
+            document.getElementById('print-btn').addEventListener('click', printTasks);
+            
+            // Modal de tareas
+            document.getElementById('close-task-modal').addEventListener('click', closeTaskModal);
+            document.getElementById('cancel-task').addEventListener('click', closeTaskModal);
+            document.getElementById('save-task').addEventListener('click', saveTask);
+            
+            // Modal de confirmación
+            document.getElementById('close-confirm-modal').addEventListener('click', closeConfirmModal);
+            document.getElementById('cancel-confirm').addEventListener('click', closeConfirmModal);
+            document.getElementById('confirm-action').addEventListener('click', executeConfirmAction);
+            
+            // Modal de correo
+            document.getElementById('cancel-email').addEventListener('click', closeEmailModal);
+            document.getElementById('send-email').addEventListener('click', sendEmail);
+        }
+        
+        // Cargar tareas desde localStorage
+        function loadTasks() {
+            try {
+                const savedTasks = localStorage.getItem('rasicTasks');
+                if (savedTasks) {
+                    tasks = JSON.parse(savedTasks);
+                    console.log(`${tasks.length} tareas cargadas desde localStorage`);
+                }
+            } catch (error) {
+                console.error('Error al cargar tareas:', error);
+                tasks = [];
+            }
+        }
+        
+        // Guardar tareas en localStorage
+        function saveTasks() {
+            try {
+                localStorage.setItem('rasicTasks', JSON.stringify(tasks));
+                console.log(`${tasks.length} tareas guardadas en localStorage`);
+            } catch (error) {
+                console.error('Error al guardar tareas:', error);
+                showNotification('Error al guardar los datos');
+            }
+        }
+        
+        // Renderizar las tareas en la tabla
+        function renderTasks() {
+            const tableBody = document.getElementById('tasks-table-body');
+            const noTasksElement = document.getElementById('no-tasks');
+            
+            // Limpiar tabla
+            tableBody.innerHTML = '';
+            
+            // Mostrar mensaje si no hay tareas
+            if (tasks.length === 0) {
+                document.querySelector('.table-container').style.display = 'none';
+                noTasksElement.style.display = 'block';
+                return;
+            } else {
+                document.querySelector('.table-container').style.display = 'block';
+                noTasksElement.style.display = 'none';
+            }
+            
+            // Ordenar tareas: primero las no completadas, luego las completadas
+            const sortedTasks = [...tasks].sort((a, b) => {
+                if (a.completed === b.completed) return 0;
+                return a.completed ? 1 : -1;
+            });
+            
+            // Renderizar cada tarea
+            sortedTasks.forEach(task => {
+                // Determinar estado y color
+                let statusClass, statusText;
+                let rowClass = task.completed ? 'completed' : '';
+                
+                if (task.completed) {
+                    statusClass = 'status-blue';
+                    statusText = 'Finalizada';
+                } else {
+                    // Comparar fecha límite con fecha actual para el semáforo
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    const dueDate = new Date(task.dueDate);
+                    dueDate.setHours(0, 0, 0, 0);
+                    
+                    const diffDays = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays < 0) {
+                        // Vencida
+                        statusClass = 'status-red';
+                        statusText = 'Vencida';
+                    } else if (diffDays <= 5) {
+                        // Próxima a vencer (5 días o menos)
+                        statusClass = 'status-yellow';
+                        statusText = 'Próxima a vencer';
+                    } else {
+                        // En plazo
+                        statusClass = 'status-green';
+                        statusText = 'En plazo';
+                    }
+                }
+                
+                // Crear la fila
+                const row = document.createElement('tr');
+                row.className = rowClass;
+                
+                row.innerHTML = `
+                    <td>${task.name}</td>
+                    <td>${task.responsible || '-'}</td>
+                    <td>${task.accountable || '-'}</td>
+                    <td>${formatList(task.support)}</td>
+                    <td>${formatList(task.informed)}</td>
+                    <td>${formatList(task.consulted)}</td>
+                    <td>${formatDate(task.dueDate)}</td>
+                    <td>
+                        <div class="status">
+                            <span class="status-dot ${statusClass}"></span>
+                            ${statusText}
+                        </div>
+                    </td>
+                    <td class="no-print">
+                        <button class="btn btn-primary btn-sm" onclick="editTask('${task.id}')">Editar</button>
+                        ${!task.completed ? `<button class="btn btn-success btn-sm" onclick="completeTask('${task.id}')">Completar</button>` : ''}
+                        <button class="btn btn-danger btn-sm" onclick="deleteTask('${task.id}')">Eliminar</button>
+                        ${statusClass === 'status-red' ? `<button class="btn btn-warning btn-sm" onclick="showEmailModal('${task.id}')">Correo</button>` : ''}
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Abrir modal para agregar/editar tarea
+        function openTaskModal(taskId = null) {
+            document.getElementById('task-form').reset();
+            
+            if (taskId) {
+                // Editar tarea existente
+                document.getElementById('task-modal-title').textContent = 'Editar Tarea';
+                currentTaskId = taskId;
+                
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    document.getElementById('task-id').value = task.id;
+                    document.getElementById('task-name').value = task.name;
+                    document.getElementById('task-description').value = task.description || '';
+                    document.getElementById('task-due-date').value = task.dueDate;
+                    
+                    // Roles RASIC
+                    if (task.responsible) document.getElementById('task-responsible').value = task.responsible;
+                    if (task.accountable) document.getElementById('task-accountable').value = task.accountable;
+                    
+                    // Selecciones múltiples
+                    setMultiSelectValues('task-support', task.support || []);
+                    setMultiSelectValues('task-informed', task.informed || []);
+                    setMultiSelectValues('task-consulted', task.consulted || []);
+                }
+            } else {
+                // Agregar nueva tarea
+                document.getElementById('task-modal-title').textContent = 'Agregar Tarea';
+                currentTaskId = null;
+                
+                // Establecer la fecha actual como predeterminada
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('task-due-date').value = today;
+            }
+            
+            // Mostrar modal
+            document.getElementById('task-modal-backdrop').style.display = 'flex';
+        }
+        
+        // Cerrar modal de tareas
+        function closeTaskModal() {
+            document.getElementById('task-modal-backdrop').style.display = 'none';
+        }
+        
+        // Guardar tarea
+        function saveTask() {
+            const name = document.getElementById('task-name').value;
+            const description = document.getElementById('task-description').value;
+            const dueDate = document.getElementById('task-due-date').value;
+            const responsible = document.getElementById('task-responsible').value;
+            const accountable = document.getElementById('task-accountable').value;
+            const support = getMultiSelectValues('task-support');
+            const informed = getMultiSelectValues('task-informed');
+            const consulted = getMultiSelectValues('task-consulted');
+            
+            // Validar campos requeridos
+            if (!name || !dueDate) {
+                showNotification('Por favor complete los campos requeridos');
+                return;
+            }
+            
+            const taskId = currentTaskId || generateId();
+            
+            const task = {
+                id: taskId,
+                name,
+                description,
+                dueDate,
+                responsible,
+                accountable,
+                support,
+                informed,
+                consulted,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+            if (currentTaskId) {
+                // Actualizar tarea existente
+                const index = tasks.findIndex(t => t.id === currentTaskId);
+                if (index !== -1) {
+                    // Preservar estado completado
+                    task.completed = tasks[index].completed;
+                    tasks[index] = task;
+                }
+                showNotification('Tarea actualizada correctamente');
+            } else {
+                // Agregar nueva tarea
+                tasks.push(task);
+                showNotification('Tarea agregada correctamente');
+            }
+            
+            // Guardar, actualizar y cerrar
+            saveTasks();
+            renderTasks();
+            closeTaskModal();
+        }
+        
+        // Completar tarea
+        function completeTask(taskId) {
+            const index = tasks.findIndex(t => t.id === taskId);
+            if (index !== -1) {
+                tasks[index].completed = true;
+                saveTasks();
+                renderTasks();
+                showNotification('Tarea marcada como completada');
+            }
+        }
+        
+        // Confirmar eliminar tarea
+        function deleteTask(taskId) {
+            showConfirmModal(
+                'Eliminar Tarea',
+                '¿Está seguro de que desea eliminar esta tarea?',
+                () => {
+                    const index = tasks.findIndex(t => t.id === taskId);
+                    if (index !== -1) {
+                        tasks.splice(index, 1);
+                        saveTasks();
+                        renderTasks();
+                        showNotification('Tarea eliminada correctamente');
+                    }
+                }
+            );
+        }
+        
+        // Editar tarea
+        function editTask(taskId) {
+            openTaskModal(taskId);
+        }
+        
+        // Mostrar modal de confirmación
+        function showConfirmModal(title, message, callback) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirm-modal-backdrop').style.display = 'flex';
+        }
+        
+        // Cerrar modal de confirmación
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal-backdrop').style.display = 'none';
+        }
+        
+        // Ejecutar acción de confirmación
+        function executeConfirmAction() {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeConfirmModal();
+        }
+        
+        // Mostrar modal de correo
+        function showEmailModal(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task || !task.responsible) {
+                showNotification('No se puede enviar correo: no hay responsable asignado');
+                return;
+            }
+            
+            document.getElementById('email-recipient').textContent = task.responsible;
+            document.getElementById('email-modal-backdrop').style.display = 'flex';
+            
+            // Guardar el ID de la tarea actual para el correo
+            currentTaskId = taskId;
+        }
+        
+        // Cerrar modal de correo
+        function closeEmailModal() {
+            document.getElementById('email-modal-backdrop').style.display = 'none';
+        }
+        
+        // Enviar correo
+        function sendEmail() {
+            const task = tasks.find(t => t.id === currentTaskId);
+            if (!task) {
+                closeEmailModal();
+                return;
+            }
+            
+            // Crear asunto y cuerpo del correo
+            const subject = `Tarea vencida: ${task.name}`;
+            const body = `Estimado/a ${task.responsible},
+
+La tarea "${task.name}" ha vencido su fecha límite (${formatDate(task.dueDate)}).
+
+Por favor proporcione:
+1. Explicación de por qué la fecha límite se ha alcanzado
+2. Propuesta para la solución de la tarea
+3. Nueva fecha de cumplimiento para que sea discutida
+
+Saludos cordiales,
+Equipo de Gestión de Proyectos
+Halotech Brasil`;
+            
+            // Abrir cliente de correo con los datos prellenados
+            const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoLink;
+            
+            closeEmailModal();
+            showNotification('Cliente de correo abierto');
+        }
+        
+        // Exportar tareas a CSV
+        function exportTasks() {
+            if (tasks.length === 0) {
+                showNotification('No hay tareas para exportar');
+                return;
+            }
+            
+            try {
+                // Crear cabecera CSV
+                let csv = 'Nombre,Descripción,Fecha Límite,Responsable,Accountable,Support,Informed,Consulted,Estado\n';
+                
+                // Agregar filas
+                tasks.forEach(task => {
+                    // Determinar estado
+                    let status;
+                    if (task.completed) {
+                        status = 'Finalizada';
+                    } else {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        const dueDate = new Date(task.dueDate);
+                        dueDate.setHours(0, 0, 0, 0);
+                        
+                        const diffDays = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDays < 0) {
+                            status = 'Vencida';
+                        } else if (diffDays <= 5) {
+                            status = 'Próxima a vencer';
+                        } else {
+                            status = 'En plazo';
+                        }
+                    }
+                    
+                    // Agregar fila al CSV
+                    csv += [
+                        escapeCsv(task.name),
+                        escapeCsv(task.description || ''),
+                        task.dueDate,
+                        escapeCsv(task.responsible || ''),
+                        escapeCsv(task.accountable || ''),
+                        escapeCsv(formatList(task.support)),
+                        escapeCsv(formatList(task.informed)),
+                        escapeCsv(formatList(task.consulted)),
+                        status
+                    ].join(',') + '\n';
+                });
+                
+                // Descargar archivo
+                downloadCsv(csv, 'rasic_tareas.csv');
+                showNotification('Tareas exportadas correctamente');
+            } catch (error) {
+                console.error('Error al exportar tareas:', error);
+                showNotification('Error al exportar tareas');
+            }
+        }
+        
+        // Importar tareas desde CSV
+        function importTasks(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split(/\r\n|\n/);
+                    
+                    // Verificar si hay datos
+                    if (lines.length <= 1) {
+                        showNotification('El archivo no contiene datos');
+                        return;
+                    }
+                    
+                    // Confirmar importación
+                    showConfirmModal(
+                        'Importar Tareas',
+                        `¿Está seguro de que desea importar estas tareas? Esto reemplazará las tareas existentes.`,
+                        () => {
+                            try {
+                                // Procesar datos CSV
+                                const importedTasks = [];
+                                
+                                // Comenzar desde la línea 1 (saltando encabezados)
+                                for (let i = 1; i < lines.length; i++) {
+                                    if (!lines[i].trim()) continue;
+                                    
+                                    const values = parseCSVLine(lines[i]);
+                                    
+                                    if (values.length < 3) continue; // Debe tener al menos nombre y fecha
+                                    
+                                    importedTasks.push({
+                                        id: generateId(),
+                                        name: values[0] || '',
+                                        description: values[1] || '',
+                                        dueDate: values[2] || new Date().toISOString().split('T')[0],
+                                        responsible: values[3] || '',
+                                        accountable: values[4] || '',
+                                        support: values[5] ? values[5].split(';').map(s => s.trim()) : [],
+                                        informed: values[6] ? values[6].split(';').map(s => s.trim()) : [],
+                                        consulted: values[7] ? values[7].split(';').map(s => s.trim()) : [],
+                                        completed: values[8] === 'Finalizada',
+                                        createdAt: new Date().toISOString()
+                                    });
+                                }
+                                
+                                if (importedTasks.length === 0) {
+                                    showNotification('No se pudieron importar tareas desde el archivo');
+                                    return;
+                                }
+                                
+                                // Actualizar tareas
+                                tasks = importedTasks;
+                                saveTasks();
+                                renderTasks();
+                                
+                                showNotification(`${importedTasks.length} tareas importadas correctamente`);
+                            } catch (error) {
+                                console.error('Error al procesar el archivo CSV:', error);
+                                showNotification('Error al procesar el archivo');
+                            }
+                        }
+                    );
+                } catch (error) {
+                    console.error('Error al leer el archivo:', error);
+                    showNotification('Error al leer el archivo');
+                }
+            };
+            
+            reader.readAsText(file);
+            
+            // Limpiar el input
+            event.target.value = '';
+        }
+        
+        // Parsear línea CSV (maneja comillas correctamente)
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && i < line.length - 1 && line[i + 1] === '"') {
+                        // Doble comilla dentro de comillas = comilla escapada
+                        current += '"';
+                        i++; // Saltar la siguiente comilla
+                    } else {
+                        // Alternar estado de comillas
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    // Fin del campo
+                    result.push(current);
+                    current = '';
+                } else {
+                    // Agregar carácter al campo actual
+                    current += char;
+                }
+            }
+            
+            // Agregar el último campo
+            result.push(current);
+            
+            return result;
+        }
+        
+        // Imprimir tareas
+        function printTasks() {
+            window.print();
+        }
+        
+        // Funciones de utilidad
+        
+        // Generar ID único
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+        }
+        
+        // Formatear lista
+        function formatList(items) {
+            if (!items || !Array.isArray(items) || items.length === 0) return '-';
+            return items.join(', ');
+        }
+        
+        // Formatear fecha
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES');
+        }
+        
+        // Obtener valores de select múltiple
+        function getMultiSelectValues(selectId) {
+            const select = document.getElementById(selectId);
+            return Array.from(select.selectedOptions).map(option => option.value);
+        }
+        
+        // Establecer valores en select múltiple
+        function setMultiSelectValues(selectId, values) {
+            if (!values || !Array.isArray(values)) return;
+            
+            const select = document.getElementById(selectId);
+            for (let i = 0; i < select.options.length; i++) {
+                select.options[i].selected = values.includes(select.options[i].value);
+            }
+        }
+        
+        // Escapar texto para CSV
+        function escapeCsv(value) {
+            if (value === null || value === undefined || value === '-') return '';
+            const str = String(value);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        }
+        
+        // Descargar archivo CSV
+        function downloadCsv(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Mostrar notificación
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            // Reiniciar animación
+            notification.style.animation = 'none';
+            notification.offsetHeight; // Trigger reflow
+            notification.style.animation = 'fadeIn 0.3s, fadeOut 0.3s 2.7s';
+            
+            // Ocultar después de 3 segundos
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

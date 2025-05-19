@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App RASIC Halotech - Corregida</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    textarea { resize: vertical; min-height: 48px; white-space: pre-wrap; word-break: break-word; }
+    @media print {
+      tr[data-color="verde"] { background-color: #d1fae5 !important; }
+      tr[data-color="amarillo"] { background-color: #fef3c7 !important; }
+      tr[data-color="rojo"] { background-color: #fecaca !important; }
+      tr[data-color="azul"] { background-color: #cce4f7 !important; }
+    }
+    /* Estilos para vista móvil básica */
+    @media (max-width: 768px) {
+      .table-container {
+        overflow-x: auto;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="p-4 bg-gray-100">
+  <h1 class="text-2xl font-bold text-center mb-4">App RASIC Halotech</h1>
+  <div class="mb-4 text-sm text-left bg-blue-100 p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">Instrucciones de uso</h2>
+    <ul class="list-disc list-inside text-xs">
+      <li>Edita las tareas directamente en la tabla.</li>
+      <li>Asigna roles RASIC con los desplegables: Responsible (R), Accountable (A), Support (S), Consulted (C), Informed (I).</li>
+      <li>Elige una fecha límite y se activará un semáforo visual.</li>
+      <li>Marca como "Finalizada" para archivar y colorear la línea.</li>
+      <li>Haz clic en Guardar para conservar los datos.</li>
+      <li>Usa Imprimir para generar un PDF con los colores activos.</li>
+      <li><strong>Nuevo:</strong> Filtra por estado y exporta tus datos a CSV.</li>
+    </ul>
+  </div>
+  
+  <!-- Controles principales -->
+  <div class="flex flex-wrap gap-2 justify-center mb-4">
+    <button onclick="agregarFila()" class="bg-green-500 text-white px-3 py-1 rounded">➕ Añadir Tarea</button>
+    <button onclick="guardarTodo()" class="bg-purple-600 text-white px-3 py-1 rounded">💾 Guardar</button>
+    <button onclick="window.print()" class="bg-blue-500 text-white px-3 py-1 rounded">🖨️ Imprimir</button>
+    <button onclick="exportarCSV()" class="bg-indigo-500 text-white px-3 py-1 rounded">📥 Exportar CSV</button>
+  </div>
+  
+  <!-- Filtros -->
+  <div class="mb-4 flex flex-wrap gap-2 justify-center">
+    <select id="filtroEstado" class="p-1 border rounded" onchange="filtrarPorEstado()">
+      <option value="todos">Todos los estados</option>
+      <option value="verde">🟢 En plazo</option>
+      <option value="amarillo">🟡 Próximo a vencer</option>
+      <option value="rojo">🔴 Vencido</option>
+      <option value="azul">🔵 Finalizado</option>
+    </select>
+    <button onclick="ordenarPorFecha()" class="bg-gray-500 text-white px-3 py-1 rounded">
+      📅 Ordenar por fecha
+    </button>
+  </div>
+  
+  <!-- Tabla principal -->
+  <div class="overflow-x-auto table-container">
+    <table class="min-w-full bg-white shadow rounded text-xs">
+      <thead class="bg-blue-500 text-white">
+        <tr>
+          <th class="p-2 border w-[600px]">Tarea</th>
+          <th class="p-2 border w-[100px]">CEO</th>
+          <th class="p-2 border w-[100px]">PMO</th>
+          <th class="p-2 border w-[100px]">Advisor</th>
+          <th class="p-2 border w-[100px]">Tozzini Freire</th>
+          <th class="p-2 border w-[100px]">Paralegal</th>
+          <th class="p-2 border">Fecha</th>
+          <th class="p-2 border">Deadline</th>
+          <th class="p-2 border">Finalizada</th>
+          <th class="p-2 border">Estado</th>
+          <th class="p-2 border">Nuevo DL</th>
+          <th class="p-2 border">🗑️</th>
+        </tr>
+      </thead>
+      <tbody id="tablaRasic"></tbody>
+    </table>
+  </div>
+  
+  <!-- Correo de seguimiento -->
+  <div class="mt-6">
+    <h2 class="text-xl font-bold text-center">Correo de Seguimiento</h2>
+    <textarea id="emailTexto" class="w-full p-2 border rounded h-32 text-xs mt-2" placeholder="Se generará automáticamente si una tarea está vencida..."></textarea>
+    <div class="flex gap-2 mt-2 justify-center">
+      <button onclick="cortarTexto()" class="p-2 bg-gray-600 text-white rounded">✉️ Copiar y Abrir Email</button>
+    </div>
+  </div>
+  
+  <script>
+    const roles = ["", "R", "A", "S", "C", "I"];
+    const PASSWORD_HASH = "8576"; // Valor simple para demo - hash de "TuCa1965"
+
+    function crearFila(data = {}) {
+      const tr = document.createElement("tr");
+      tr.className = "text-center border text-xs";
+      const tarea = data.tarea || "";
+      const rasic = data.rasic || ["", "", "", "", ""];
+      const fechaActual = data.fechaActual || new Date().toISOString().split("T")[0];
+      const deadline = data.deadline || "";
+      const tareaFinalizada = data.tareaFinalizada || "No";
+      const estado = data.estado || "⚪";
+      const nuevoDeadline = data.nuevoDeadline || "";
+
+      tr.dataset.color = colorDesdeEstado(estado);
+      tr.style.backgroundColor = colorFondo(tr.dataset.color);
+
+      tr.innerHTML = `
+        <td class="p-2 border"><textarea class="w-full p-1 border rounded resize-y" rows="2">${tarea}</textarea></td>
+        ${rasic.map(val => `<td class="p-2 border"><select class="w-full p-1 border rounded text-xs">${roles.map(r => `<option ${r === val ? "selected" : ""}>${r}</option>`).join('')}</select></td>`).join('')}
+        <td class="p-2 border">${fechaActual}</td>
+        <td class="p-2 border"><input type="date" class="w-full p-1 border rounded" value="${deadline}" onchange="actualizarSemaforo(this)"></td>
+        <td class="p-2 border"><select onchange="actualizarFinalizada(this)" class="w-full p-1 border rounded"><option ${tareaFinalizada === "No" ? "selected" : ""}>No</option><option ${tareaFinalizada === "Si" ? "selected" : ""}>Si</option></select></td>
+        <td class="p-2 border semaforo">${estado}</td>
+        <td class="p-2 border"><input type="date" class="w-full p-1 border rounded" value="${nuevoDeadline}" ${estado === "🔴" ? "" : "disabled"}></td>
+        <td class="p-2 border"><button onclick="protegerEliminacion(this)" class="text-red-600">🗑️</button></td>
+      `;
+      return tr;
+    }
+
+    function agregarFila() {
+      const fila = crearFila();
+      document.getElementById("tablaRasic").appendChild(fila);
+      guardarTodo();
+    }
+
+    function guardarTodo() {
+      try {
+        const data = [];
+        document.querySelectorAll("#tablaRasic tr").forEach(row => {
+          const tarea = row.querySelector("textarea").value;
+          const selects = row.querySelectorAll("select");
+          const rasic = Array.from(selects).slice(0, 5).map(s => s.value);
+          const fechaActual = row.cells[6].textContent;
+          const deadline = row.cells[7].querySelector("input").value;
+          const tareaFinalizada = row.cells[8].querySelector("select").value;
+          const estado = row.cells[9].textContent;
+          const nuevoDeadline = row.cells[10].querySelector("input").value;
+          data.push({ tarea, rasic, fechaActual, deadline, tareaFinalizada, estado, nuevoDeadline });
+        });
+        
+        localStorage.setItem("tablaTareasData", JSON.stringify(data));
+        
+        // Indicador visual de guardado
+        const mensaje = document.createElement('div');
+        mensaje.className = 'fixed bottom-4 right-4 bg-green-500 text-white p-2 rounded shadow';
+        mensaje.textContent = '✅ Guardado correctamente';
+        document.body.appendChild(mensaje);
+        setTimeout(() => mensaje.remove(), 2000);
+      } catch (e) {
+        console.error("Error al guardar datos:", e);
+        alert("Error al guardar datos: " + e.message);
+      }
+    }
+
+    function cargarTareas() {
+      try {
+        const data = localStorage.getItem("tablaTareasData");
+        const tabla = document.getElementById("tablaRasic");
+        tabla.innerHTML = "";
+
+        if (data) {
+          JSON.parse(data).forEach(d => tabla.appendChild(crearFila(d)));
+        } else {
+          const tareasIniciales = [
+            "El socio extranjero debe proporcionar documentos que acrediten su existencia y buena reputación",
+            "Borrador de poderes: fiscal y societario",
+            "Aprobación de los poderes",
+            "Entrega de organigrama, pasaporte y prueba del cargo del firmante",
+            "Traducción jurada y registro de documentos",
+            "Inscripción del socio extranjero en el CNPJ",
+            "Definición de nombre, domicilio, objeto social y gobernanza",
+            "Redacción y aprobación de estatutos sociales",
+            "Registro de la filial ante la Junta Comercial",
+            "Registro municipal, estatal y ante el Banco Central",
+            "Obtención de licencia permanente",
+            "Contratación de asesoría contable y e-CNPJ"
+          ];
+          tareasIniciales.forEach(t => tabla.appendChild(crearFila({ tarea: t })));
+          guardarTodo();
+        }
+      } catch (e) {
+        console.error("Error al cargar datos:", e);
+        alert("Error al cargar datos: " + e.message);
+      }
+    }
+
+    function actualizarSemaforo(input) {
+      try {
+        const deadlineValue = input.value;
+        if (!deadlineValue) return;
+        
+        // Validar la fecha
+        const deadlineDate = new Date(deadlineValue);
+        const hoyDate = new Date();
+        hoyDate.setHours(0, 0, 0, 0);
+        
+        if (deadlineDate < hoyDate) {
+          alert("No se puede establecer una fecha límite en el pasado");
+          input.value = hoyDate.toISOString().split("T")[0];
+          return;
+        }
+        
+        const row = input.closest("tr");
+        const tarea = sanitizarTexto(row.querySelector("textarea").value);
+        const semaforo = row.querySelector(".semaforo");
+        const diff = (deadlineDate - hoyDate) / (1000 * 60 * 60 * 24);
+        const nuevoDL = row.cells[10].querySelector("input");
+
+        let color = "";
+        if (diff > 15) { semaforo.textContent = "🟢"; color = "verde"; nuevoDL.disabled = true; }
+        else if (diff >= 0) { semaforo.textContent = "🟡"; color = "amarillo"; nuevoDL.disabled = true; }
+        else { 
+          semaforo.textContent = "🔴"; 
+          color = "rojo"; 
+          nuevoDL.disabled = false; 
+          document.getElementById("emailTexto").value = `Estimado equipo,
+
+La tarea "${tarea}" ha vencido su fecha límite. Por favor indique:
+- Motivo del retraso
+- Acción correctora
+- Nuevo deadline propuesto
+
+Gracias.`; 
+        }
+
+        row.dataset.color = color;
+        row.style.backgroundColor = colorFondo(color);
+        guardarTodo();
+      } catch (e) {
+        console.error("Error al actualizar semáforo:", e);
+      }
+    }
+
+    function actualizarFinalizada(select) {
+      try {
+        const row = select.closest("tr");
+        const tarea = row.querySelector("textarea");
+        const semaforo = row.querySelector(".semaforo");
+        
+        if (select.value === "Si") {
+          tarea.style.textDecoration = "line-through";
+          semaforo.textContent = "🔵";
+          row.dataset.color = "azul";
+          row.style.backgroundColor = colorFondo("azul");
+        } else {
+          tarea.style.textDecoration = "none";
+          const deadline = row.cells[7].querySelector("input").value;
+          if (deadline) {
+            // Recalcular estado
+            actualizarSemaforo(row.cells[7].querySelector("input"));
+          } else {
+            semaforo.textContent = "⚪";
+            row.dataset.color = "";
+            row.style.backgroundColor = "";
+          }
+        }
+        
+        guardarTodo();
+      } catch (e) {
+        console.error("Error al actualizar finalizada:", e);
+      }
+    }
+
+    function cortarTexto() {
+      try {
+        const txt = document.getElementById("emailTexto").value;
+        
+        navigator.clipboard.writeText(txt)
+          .then(() => {
+            const asunto = encodeURIComponent("Seguimiento de tarea retrasada");
+            const cuerpo = encodeURIComponent(txt);
+            window.open(`mailto:?subject=${asunto}&body=${cuerpo}`, "_blank");
+          })
+          .catch(err => {
+            console.error("Error al copiar texto:", err);
+            alert("No se pudo copiar el texto. Por favor, cópialo manualmente.");
+          });
+      } catch (e) {
+        console.error("Error al cortar texto:", e);
+        alert("Error al abrir el correo: " + e.message);
+      }
+    }
+
+    function protegerEliminacion(btn) {
+      try {
+        const row = btn.closest("tr");
+        const nombreTarea = row.querySelector("textarea").value;
+        
+        // Confirmación
+        if (!confirm(`¿Está seguro que desea eliminar la tarea "${nombreTarea.substring(0, 30)}${nombreTarea.length > 30 ? '...' : ''}"?`)) {
+          return;
+        }
+        
+        const pw = prompt("Contraseña para eliminar:");
+        if (!pw) return;
+        
+        if (pw === "TuCa1965" || simpleHash(pw) === PASSWORD_HASH) {
+          row.remove();
+          guardarTodo();
+        } else {
+          alert("Contraseña incorrecta.");
+        }
+      } catch (e) {
+        console.error("Error al eliminar:", e);
+      }
+    }
+
+    function colorDesdeEstado(estado) {
+      return { "🟢": "verde", "🟡": "amarillo", "🔴": "rojo", "🔵": "azul" }[estado] || "";
+    }
+
+    function colorFondo(color) {
+      return {
+        verde: "#d1fae5",
+        amarillo: "#fef3c7",
+        rojo: "#fecaca",
+        azul: "#cce4f7"
+      }[color] || "";
+    }
+    
+    // Función simple de hash (sólo para demo)
+    function simpleHash(str) {
+      return String(str).split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+      }, 0).toString().slice(-4);
+    }
+    
+    // Sanitizar texto para prevenir inyección de scripts
+    function sanitizarTexto(texto) {
+      if (!texto) return "";
+      return texto.replace(/[<>&"']/g, c => {
+        return { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    
+    // Función para filtrar por estado
+    function filtrarPorEstado() {
+      try {
+        const filtro = document.getElementById('filtroEstado').value;
+        document.querySelectorAll("#tablaRasic tr").forEach(row => {
+          if (filtro === 'todos' || row.dataset.color === filtro) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      } catch (e) {
+        console.error("Error al filtrar:", e);
+      }
+    }
+    
+    // Función para ordenar por fecha
+    function ordenarPorFecha() {
+      try {
+        const tabla = document.getElementById('tablaRasic');
+        const filas = Array.from(tabla.querySelectorAll('tr'));
+        
+        filas.sort((a, b) => {
+          const fechaA = new Date(a.cells[7].querySelector('input').value || '9999-12-31');
+          const fechaB = new Date(b.cells[7].querySelector('input').value || '9999-12-31');
+          return fechaA - fechaB;
+        });
+        
+        tabla.innerHTML = '';
+        filas.forEach(fila => tabla.appendChild(fila));
+      } catch (e) {
+        console.error("Error al ordenar:", e);
+      }
+    }
+    
+    // Función para exportar a CSV
+    function exportarCSV() {
+      try {
+        let csv = 'Tarea,CEO,PMO,Advisor,Tozzini Freire,Paralegal,Fecha,Deadline,Finalizada,Estado\n';
+        
+        document.querySelectorAll("#tablaRasic tr").forEach(row => {
+          // No exportar filas filtradas
+          if (row.style.display === 'none') return;
+          
+          const tarea = row.querySelector("textarea").value.replace(/,/g, ' ').replace(/\n/g, ' ');
+          const selects = row.querySelectorAll("select");
+          const rasic = Array.from(selects).slice(0, 5).map(s => s.value);
+          const fechaActual = row.cells[6].textContent;
+          const deadline = row.cells[7].querySelector("input").value;
+          const tareaFinalizada = row.cells[8].querySelector("select").value;
+          const estado = row.cells[9].textContent;
+          
+          csv += `"${tarea}",${rasic.join(',')},${fechaActual},${deadline},${tareaFinalizada},${estado}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'tareas_rasic.csv';
+        a.click();
+      } catch (e) {
+        console.error("Error al exportar CSV:", e);
+        alert("Error al exportar CSV: " + e.message);
+      }
+    }
+
+    // Inicialización
+    window.onload = function() {
+      try {
+        cargarTareas();
+        
+        // Verificar semáforos
+        document.querySelectorAll("#tablaRasic tr").forEach(row => {
+          const deadlineInput = row.cells[7].querySelector("input");
+          if (deadlineInput.value) {
+            actualizarSemaforo(deadlineInput);
+          }
+          
+          // Restaurar estado visual
+          if (row.cells[8].querySelector("select").value === "Si") {
+            row.querySelector("textarea").style.textDecoration = "line-through";
+          }
+        });
+      } catch (e) {
+        console.error("Error al inicializar:", e);
+        alert("Error al inicializar la aplicación: " + e.message);
+      }
+    };
+  </script>
+</body>
+</html>
