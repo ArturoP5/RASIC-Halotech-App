@@ -179,8 +179,17 @@
     
     // Carga inicial al cargar la página
     document.addEventListener("DOMContentLoaded", function() {
-      // Inicializar la aplicación
-      cargarTareas();
+  // Datos iniciales preconfigurados
+  const datosIniciales = [PEGA_AQUÍ_TUS_DATOS_JSON];
+  
+  // Comprobar si ya hay datos guardados
+  if (!localStorage.getItem("tablaTareasData")) {
+    // Si no hay datos, usar los datos iniciales
+    localStorage.setItem("tablaTareasData", JSON.stringify(datosIniciales));
+  }
+  
+  // Inicializar la aplicación
+  cargarTareas();
       
       // Event Listeners para los botones principales
       document.getElementById("btnAddTask").addEventListener("click", agregarNuevaTarea);
