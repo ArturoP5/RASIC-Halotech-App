@@ -562,7 +562,7 @@ document.addEventListener("DOMContentLoaded", function() {
           const tarea = row.querySelector("textarea")?.value || "";
           const selects = row.querySelectorAll("select");
           const rasic = Array.from(selects).slice(0, 6).map(s => s.value);
-          const fechaActual = row.cells[7]?.textContent || "";
+          const fechaActual = row.cells[7]?.textContent || new Date().toISOString().split("T")[0];
           const deadline = row.cells[8]?.querySelector("input")?.value || "";
           const tareaFinalizada = row.cells[9]?.querySelector("select")?.value || "No";
           const estado = row.cells[10]?.textContent || "⚪";
@@ -589,6 +589,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const data = localStorage.getItem("tablaTareasData");
         const tabla = document.getElementById("tablaRasic");
         tabla.innerHTML = "";
+        
+        const fechaHoy = new Date().toISOString().split("T")[0];
 
         if (data) {
           // Hay datos guardados, cargarlos
@@ -608,7 +610,7 @@ document.addEventListener("DOMContentLoaded", function() {
             tr.innerHTML = `
               <td class="p-2 border"><textarea class="w-full p-1 border rounded resize-y" rows="2" style="${tareaStyle}">${task.tarea || ""}</textarea></td>
               ${(task.rasic || ["", "", "", "", "", ""]).map((val, idx) => `<td class="p-2 border"><select class="w-full p-1 border rounded text-xs">${roles.map(r => `<option ${r === val ? "selected" : ""}>${r}</option>`).join('')}</select></td>`).join('')}
-              <td class="p-2 border">${task.fechaActual || new Date().toISOString().split("T")[0]}</td>
+              <td class="p-2 border">${fechaHoy}</td>
               <td class="p-2 border"><input type="date" class="w-full p-1 border rounded" value="${task.deadline || ""}"></td>
               <td class="p-2 border"><select class="w-full p-1 border rounded"><option ${task.tareaFinalizada !== "Si" ? "selected" : ""}>No</option><option ${task.tareaFinalizada === "Si" ? "selected" : ""}>Si</option></select></td>
               <td class="p-2 border semaforo">${task.estado || "⚪"}</td>
@@ -732,6 +734,13 @@ document.addEventListener("DOMContentLoaded", function() {
         const deadlineDate = new Date(deadlineValue + "T00:00:00");
         const hoyDate = new Date();
         hoyDate.setHours(0, 0, 0, 0);
+
+        // Actualizar la celda de fecha actual en la fila
+        const row = input.closest("tr");
+        const fechaActualCell = row.cells[7];
+        if (fechaActualCell) {
+          fechaActualCell.textContent = hoyDate.toISOString().split("T")[0];
+        }
         
         if (deadlineDate < hoyDate) {
           mostrarNotificacion("⚠️ No se puede establecer una fecha en el pasado", "warning");
@@ -739,7 +748,7 @@ document.addEventListener("DOMContentLoaded", function() {
           return;
         }
         
-        const row = input.closest("tr");
+    
         const tarea = sanitizarTexto(row.querySelector("textarea")?.value || "");
         const semaforo = row.querySelector(".semaforo");
         if (!semaforo) return;
