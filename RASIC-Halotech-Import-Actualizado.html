@@ -4,18 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>App RASIC Halotech - Responsiva</title>
-<!-- Iconos para diferentes dispositivos -->
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="android-chrome-192x192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="android-chrome-512x512.png">
-  
-  <!-- Metadatos para móviles -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="RASIC Halotech">
   <!-- Tailwind CSS para estilos -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- SheetJS para manejo de Excel -->
@@ -659,6 +647,16 @@ document.addEventListener("DOMContentLoaded", function() {
           cargarTareasIniciales();
         }
         
+        // EVALUAR AUTOMÁTICAMENTE todas las fechas al cargar
+setTimeout(() => {
+  document.querySelectorAll("#tablaRasic tr").forEach(row => {
+    const deadlineInput = row.cells[8]?.querySelector("input");
+    if (deadlineInput && deadlineInput.value) {
+      actualizarSemaforo(deadlineInput);
+    }
+  });
+}, 100);
+
         actualizarVistaMobile();
       } catch (e) {
         console.error("Error al cargar datos:", e);
@@ -741,24 +739,40 @@ document.addEventListener("DOMContentLoaded", function() {
       try {
         const deadlineValue = input.value;
         if (!deadlineValue) return;
-        
+        // Verificar si la tarea ya está finalizada
+const row = input.closest("tr");
+const finalizadaSelect = row.cells[9]?.querySelector("select");
+if (finalizadaSelect && finalizadaSelect.value === "Si") {
+  return; // No procesar semáforo si está finalizada
+}
         // Validar la fecha
         const deadlineDate = new Date(deadlineValue + "T00:00:00");
         const hoyDate = new Date();
         hoyDate.setHours(0, 0, 0, 0);
 
         // Actualizar la celda de fecha actual en la fila
-        const row = input.closest("tr");
-        const fechaActualCell = row.cells[7];
+        const fechaActualCell = row.cells[7];  // ← SIN "const row ="
+        
         if (fechaActualCell) {
           fechaActualCell.textContent = hoyDate.toISOString().split("T")[0];
         }
         
-        if (deadlineDate < hoyDate) {
-          mostrarNotificacion("⚠️ No se puede establecer una fecha en el pasado", "warning");
-          input.value = hoyDate.toISOString().split("T")[0];
-          return;
-        }
+       // Solo prevenir fechas pasadas cuando el usuario está CAMBIANDO la fecha manualmente
+// Obtener la fecha anterior (si existe)
+const fechaAnterior = input.getAttribute('data-fecha-anterior');
+
+// Solo prevenir fechas pasadas cuando el usuario está CAMBIANDO manualmente la fecha
+// No cuando estamos evaluando fechas ya establecidas o cargando por primera vez
+const esNuevaFecha = fechaAnterior !== null && input.value !== fechaAnterior;
+
+if (deadlineDate < hoyDate && esNuevaFecha) {
+  mostrarNotificacion("⚠️ No se puede establecer una fecha en el pasado", "warning");
+  input.value = hoyDate.toISOString().split("T")[0];
+  return;
+}
+
+// Guardar la fecha actual para futuras comparaciones
+input.setAttribute('data-fecha-anterior', input.value);
         
     
         const tarea = sanitizarTexto(row.querySelector("textarea")?.value || "");
