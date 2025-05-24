@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard RASIC Halotech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    .card-gradient {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .metric-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .kpi-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    @media (max-width: 768px) {
+      .kpi-number { font-size: 2rem; }
+    }
+    .notificacion-toast {
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <header class="card-gradient text-white p-6 shadow-lg">
+    <div class="max-w-7xl mx-auto">
+      <h1 class="text-3xl font-bold mb-2">📊 Dashboard RASIC Halotech</h1>
+      <p class="opacity-90">Análisis y métricas de tareas - <span id="fechaActualizacion"></span></p>
+    </div>
+  </header>
+
+  <!-- Controles -->
+  <div class="max-w-7xl mx-auto p-4">
+    <div class="flex flex-wrap gap-3 justify-between items-center mb-6">
+      <div class="flex flex-wrap gap-2">
+        <button id="btnActualizar" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+          🔄 Actualizar Dashboard
+        </button>
+        <button id="btnCargarDatos" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+          📂 Cargar Datos de Prueba
+        </button>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-sm font-medium">Filtrar por estado:</label>
+        <select id="filtroMetricas" class="p-2 border rounded-lg">
+          <option value="todos">Todos</option>
+          <option value="activas">Solo activas</option>
+          <option value="finalizadas">Solo finalizadas</option>
+        </select>
+      </div>
+    </div>
+    <!-- KPIs Principales -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="metric-card bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-sm font-medium">Total Tareas</p>
+            <p class="kpi-number text-blue-600" id="totalTareas">0</p>
+          </div>
+          <div class="text-blue-500 text-3xl">📋</div>
+        </div>
+      </div>
+
+      <div class="metric-card bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-sm font-medium">En Plazo</p>
+            <p class="kpi-number text-green-600" id="enPlazo">0</p>
+          </div>
+          <div class="text-green-500 text-3xl">🟢</div>
+        </div>
+      </div>
+
+      <div class="metric-card bg-white p-6 rounded-xl shadow-lg border-l-4 border-red-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-sm font-medium">Vencidas</p>
+            <p class="kpi-number text-red-600" id="vencidas">0</p>
+          </div>
+          <div class="text-red-500 text-3xl">🔴</div>
+        </div>
+      </div>
+
+      <div class="metric-card bg-white p-6 rounded-xl shadow-lg border-l-4 border-purple-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-sm font-medium">Finalizadas</p>
+            <p class="kpi-number text-purple-600" id="finalizadas">0</p>
+          </div>
+          <div class="text-purple-500 text-3xl">🔵</div>
+        </div>
+      </div>
+    </div>
+    <!-- Gráficos Principales -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Distribución por Estado -->
+      <div class="bg-white p-6 rounded-xl shadow-lg">
+        <h3 class="text-lg font-bold mb-4 text-gray-800">📊 Distribución por Estado</h3>
+        <div class="relative" style="height: 300px;">
+          <canvas id="estadosChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Carga de Trabajo por Rol -->
+      <div class="bg-white p-6 rounded-xl shadow-lg">
+        <h3 class="text-lg font-bold mb-4 text-gray-800">👥 Carga de Trabajo por Rol</h3>
+        <div class="relative" style="height: 300px;">
+          <canvas id="rolesChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline de Deadlines -->
+    <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+      <h3 class="text-lg font-bold mb-4 text-gray-800">📅 Timeline de Deadlines Próximos</h3>
+      <div id="timelineContainer" class="space-y-3">
+        <!-- Se llena dinámicamente -->
+      </div>
+    </div>
+    <!-- Tabla de Alertas -->
+    <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+      <h3 class="text-lg font-bold mb-4 text-gray-800">⚠️ Tareas que Requieren Atención</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" id="tablaAlertas">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="p-3 text-left">Tarea</th>
+              <th class="p-3 text-center">Responsable</th>
+              <th class="p-3 text-center">Deadline</th>
+              <th class="p-3 text-center">Días</th>
+              <th class="p-3 text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="alertasBody">
+            <!-- Se llena dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Métricas por Responsable -->
+    <div class="bg-white p-6 rounded-xl shadow-lg">
+      <h3 class="text-lg font-bold mb-4 text-gray-800">📈 Métricas por Responsable</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="metricasResponsables">
+        <!-- Se llena dinámicamente -->
+      </div>
+    </div>
+  </div>
+  <script>
+    // Variables globales
+    let datosRASIC = [];
+    let chartEstados = null;
+    let chartRoles = null;
+
+    // Datos de ejemplo para pruebas
+    const datosEjemplo = [
+      {
+        "id": "1",
+        "tarea": "Definir arquitectura del sistema",
+        "rasic": ["R", "A", "", "S", "I", ""],
+        "fechaActual": "2025-01-15",
+        "deadline": "2025-05-30",
+        "tareaFinalizada": "No",
+        "estado": "🟢",
+        "nuevoDeadline": ""
+      },
+      {
+        "id": "2",
+        "tarea": "Implementar base de datos",
+        "rasic": ["", "A", "R", "", "S", ""],
+        "fechaActual": "2025-01-15",
+        "deadline": "2025-05-25",
+        "tareaFinalizada": "No",
+        "estado": "🟡",
+        "nuevoDeadline": ""
+      },
+      {
+        "id": "3",
+        "tarea": "Diseño de interfaz de usuario",
+        "rasic": ["S", "", "", "R", "I", "A"],
+        "fechaActual": "2025-01-15",
+        "deadline": "2025-05-22",
+        "tareaFinalizada": "No",
+        "estado": "🔴",
+        "nuevoDeadline": ""
+      },
+      {
+        "id": "4",
+        "tarea": "Testing y QA",
+        "rasic": ["", "S", "I", "", "R", "A"],
+        "fechaActual": "2025-01-15",
+        "deadline": "2025-05-20",
+        "tareaFinalizada": "Si",
+        "estado": "🔵",
+        "nuevoDeadline": ""
+      }
+    ];
+
+    // Inicializar cuando se carga la página
+    document.addEventListener('DOMContentLoaded', function() {
+      inicializarEventListeners();
+      cargarDatosDesdeLocalStorage();
+      if (datosRASIC.length === 0) {
+        mostrarNotificacion("ℹ️ No hay datos. Usa 'Cargar Datos de Prueba' para ver el dashboard en acción.", "info");
+      } else {
+        actualizarDashboard();
+      }
+    });
+    function inicializarEventListeners() {
+      const btnActualizar = document.getElementById('btnActualizar');
+      const btnCargarDatos = document.getElementById('btnCargarDatos');
+      const filtroMetricas = document.getElementById('filtroMetricas');
+
+      if (btnActualizar) {
+        btnActualizar.addEventListener('click', actualizarDashboard);
+      }
+
+      if (btnCargarDatos) {
+        btnCargarDatos.addEventListener('click', cargarDatosDePrueba);
+      }
+
+      if (filtroMetricas) {
+        filtroMetricas.addEventListener('change', actualizarDashboard);
+      }
+    }
+
+    function cargarDatosDesdeLocalStorage() {
+      try {
+        const data = localStorage.getItem("tablaTareasData");
+        if (data) {
+          datosRASIC = JSON.parse(data);
+          console.log("Datos cargados desde localStorage:", datosRASIC.length, "tareas");
+        } else {
+          datosRASIC = [];
+          console.log("No hay datos en localStorage");
+        }
+      } catch (error) {
+        console.error("Error al cargar datos:", error);
+        datosRASIC = [];
+        mostrarNotificacion("❌ Error al cargar los datos", "error");
+      }
+    }
+
+    function cargarDatosDePrueba() {
+      datosRASIC = [...datosEjemplo];
+      actualizarDashboard();
+      mostrarNotificacion("✅ Datos de prueba cargados correctamente", "success");
+    }
+
+    function actualizarDashboard() {
+      try {
+        const filtroElement = document.getElementById('filtroMetricas');
+        const filtro = filtroElement ? filtroElement.value : 'todos';
+        const datosFiltrados = filtrarDatos(datosRASIC, filtro);
+        
+        actualizarKPIs(datosFiltrados);
+        actualizarGraficoEstados(datosFiltrados);
+        actualizarGraficoRoles(datosFiltrados);
+        actualizarTimeline(datosFiltrados);
+        actualizarTablaAlertas(datosFiltrados);
+        actualizarMetricasResponsables(datosFiltrados);
+        
+        const fechaElement = document.getElementById('fechaActualizacion');
+        if (fechaElement) {
+          fechaElement.textContent = new Date().toLocaleString();
+        }
+        
+        mostrarNotificacion("✅ Dashboard actualizado", "success");
+      } catch (error) {
+        console.error("Error al actualizar dashboard:", error);
+        mostrarNotificacion("❌ Error al actualizar dashboard", "error");
+      }
+    }
+
+    function filtrarDatos(datos, filtro) {
+      if (!Array.isArray(datos)) return [];
+      
+      switch(filtro) {
+        case 'activas':
+          return datos.filter(t => t.tareaFinalizada !== 'Si');
+        case 'finalizadas':
+          return datos.filter(t => t.tareaFinalizada === 'Si');
+        default:
+          return datos;
+      }
+    }
+    function actualizarKPIs(datos) {
+      try {
+        const total = datos.length;
+        const enPlazo = datos.filter(t => t.estado === '🟢').length;
+        const vencidas = datos.filter(t => t.estado === '🔴').length;
+        const finalizadas = datos.filter(t => t.estado === '🔵').length;
+
+        const elements = {
+          totalTareas: document.getElementById('totalTareas'),
+          enPlazo: document.getElementById('enPlazo'),
+          vencidas: document.getElementById('vencidas'),
+          finalizadas: document.getElementById('finalizadas')
+        };
+
+        if (elements.totalTareas) elements.totalTareas.textContent = total;
+        if (elements.enPlazo) elements.enPlazo.textContent = enPlazo;
+        if (elements.vencidas) elements.vencidas.textContent = vencidas;
+        if (elements.finalizadas) elements.finalizadas.textContent = finalizadas;
+      } catch (error) {
+        console.error("Error al actualizar KPIs:", error);
+      }
+    }
+
+    function actualizarGraficoEstados(datos) {
+      try {
+        const canvas = document.getElementById('estadosChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        
+        if (chartEstados) {
+          chartEstados.destroy();
+          chartEstados = null;
+        }
+
+        const estados = {
+          'En plazo': datos.filter(t => t.estado === '🟢').length,
+          'Próximo a vencer': datos.filter(t => t.estado === '🟡').length,
+          'Vencidas': datos.filter(t => t.estado === '🔴').length,
+          'Finalizadas': datos.filter(t => t.estado === '🔵').length,
+          'Sin fecha': datos.filter(t => t.estado === '⚪' || !t.estado).length
+        };
+
+        chartEstados = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: Object.keys(estados),
+            datasets: [{
+              data: Object.values(estados),
+              backgroundColor: [
+                '#10B981', // Verde
+                '#F59E0B', // Amarillo
+                '#EF4444', // Rojo
+                '#3B82F6', // Azul
+                '#9CA3AF'  // Gris
+              ],
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Error al crear gráfico de estados:", error);
+      }
+    }
+    function actualizarGraficoRoles(datos) {
+      try {
+        const canvas = document.getElementById('rolesChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        
+        if (chartRoles) {
+          chartRoles.destroy();
+          chartRoles = null;
+        }
+
+        const roles = ['CEO', 'PMO', 'Finanzas', 'Advisor', 'Tozzini F.', 'Paralegal'];
+        const conteoRoles = {};
+
+        roles.forEach(rol => {
+          conteoRoles[rol] = 0;
+        });
+
+        datos.forEach(tarea => {
+          if (tarea.rasic && Array.isArray(tarea.rasic)) {
+            tarea.rasic.forEach((valor, index) => {
+              if (valor && valor !== '' && index < roles.length) {
+                conteoRoles[roles[index]]++;
+              }
+            });
+          }
+        });
+
+        chartRoles = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: roles,
+            datasets: [{
+              label: 'Tareas asignadas',
+              data: Object.values(conteoRoles),
+              backgroundColor: [
+                '#3B82F6', '#10B981', '#F59E0B', 
+                '#EF4444', '#8B5CF6', '#06B6D4'
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Error al crear gráfico de roles:", error);
+      }
+    }
+
+    function actualizarTimeline(datos) {
+      try {
+        const container = document.getElementById('timelineContainer');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        // Filtrar tareas con deadline y no finalizadas
+        const tareasConDeadline = datos
+          .filter(t => t.deadline && t.tareaFinalizada !== 'Si')
+          .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+          .slice(0, 10); // Solo las próximas 10
+
+        if (tareasConDeadline.length === 0) {
+          container.innerHTML = '<p class="text-gray-500 text-center py-4">No hay deadlines próximos</p>';
+          return;
+        }
+
+        tareasConDeadline.forEach(tarea => {
+          const deadline = new Date(tarea.deadline);
+          const hoy = new Date();
+          const diasRestantes = Math.ceil((deadline - hoy) / (1000 * 60 * 60 * 24));
+          
+          let colorClase = 'bg-gray-100';
+          let estadoTexto = 'Sin estado';
+          
+          if (tarea.estado === '🟢') {
+            colorClase = 'bg-green-100 border-l-4 border-green-500';
+            estadoTexto = 'En plazo';
+          } else if (tarea.estado === '🟡') {
+            colorClase = 'bg-yellow-100 border-l-4 border-yellow-500';
+            estadoTexto = 'Próximo a vencer';
+          } else if (tarea.estado === '🔴') {
+            colorClase = 'bg-red-100 border-l-4 border-red-500';
+            estadoTexto = 'Vencida';
+          }
+
+          const item = document.createElement('div');
+          item.className = `${colorClase} p-4 rounded-lg`;
+          item.innerHTML = `
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+              <div class="flex-1">
+                <h4 class="font-semibold text-sm">${(tarea.tarea || '').substring(0, 80)}${(tarea.tarea || '').length > 80 ? '...' : ''}</h4>
+                <p class="text-xs text-gray-600 mt-1">
+                  ${deadline.toLocaleDateString()} • ${estadoTexto}
+                </p>
+              </div>
+              <div class="text-right">
+                <span class="inline-block px-2 py-1 rounded text-xs font-medium ${
+                  diasRestantes < 0 ? 'bg-red-200 text-red-800' :
+                  diasRestantes <= 3 ? 'bg-yellow-200 text-yellow-800' :
+                  'bg-green-200 text-green-800'
+                }">
+                  ${diasRestantes < 0 ? `${Math.abs(diasRestantes)} días atrás` : 
+                    diasRestantes === 0 ? 'Hoy' : `${diasRestantes} días`}
+                </span>
+              </div>
+            </div>
+          `;
+          container.appendChild(item);
+        });
+      } catch (error) {
+        console.error("Error al actualizar timeline:", error);
+      }
+    }
+    function actualizarTablaAlertas(datos) {
+      try {
+        const tbody = document.getElementById('alertasBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        // Tareas que requieren atención (vencidas o próximas a vencer)
+        const tareasAtencion = datos
+          .filter(t => (t.estado === '🔴' || t.estado === '🟡') && t.tareaFinalizada !== 'Si')
+          .sort((a, b) => {
+            if (a.estado === '🔴' && b.estado !== '🔴') return -1;
+            if (b.estado === '🔴' && a.estado !== '🔴') return 1;
+            return new Date(a.deadline) - new Date(b.deadline);
+          });
+
+        if (tareasAtencion.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay tareas que requieran atención inmediata</td></tr>';
+          return;
+        }
+
+        tareasAtencion.forEach(tarea => {
+          const responsable = obtenerResponsablePrincipal(tarea.rasic);
+          const deadline = tarea.deadline ? new Date(tarea.deadline) : null;
+          const diasRestantes = deadline ? Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24)) : null;
+
+          const fila = document.createElement('tr');
+          fila.className = tarea.estado === '🔴' ? 'bg-red-50' : 'bg-yellow-50';
+          fila.innerHTML = `
+            <td class="p-3">${(tarea.tarea || '').substring(0, 50)}${(tarea.tarea || '').length > 50 ? '...' : ''}</td>
+            <td class="p-3 text-center">${responsable}</td>
+            <td class="p-3 text-center">${deadline ? deadline.toLocaleDateString() : 'N/A'}</td>
+            <td class="p-3 text-center">
+              <span class="px-2 py-1 rounded text-xs ${
+                diasRestantes !== null && diasRestantes < 0 ? 'bg-red-200 text-red-800' :
+                diasRestantes !== null && diasRestantes <= 3 ? 'bg-yellow-200 text-yellow-800' :
+                'bg-green-200 text-green-800'
+              }">
+                ${diasRestantes === null ? 'N/A' :
+                  diasRestantes < 0 ? Math.abs(diasRestantes) + ' días atrás' : 
+                  diasRestantes === 0 ? 'Hoy' : diasRestantes + ' días'}
+              </span>
+            </td>
+            <td class="p-3 text-center text-lg">${tarea.estado || '⚪'}</td>
+          `;
+          tbody.appendChild(fila);
+        });
+      } catch (error) {
+        console.error("Error al actualizar tabla de alertas:", error);
+      }
+    }
+
+    function actualizarMetricasResponsables(datos) {
+      try {
+        const container = document.getElementById('metricasResponsables');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const roles = ['CEO', 'PMO', 'Finanzas', 'Advisor', 'Tozzini F.', 'Paralegal'];
+        
+        roles.forEach((rol, index) => {
+          const tareasRol = datos.filter(t => t.rasic && t.rasic[index] && t.rasic[index] !== '');
+          const total = tareasRol.length;
+          const finalizadas = tareasRol.filter(t => t.tareaFinalizada === 'Si').length;
+          const vencidas = tareasRol.filter(t => t.estado === '🔴').length;
+          const porcentajeCompletado = total > 0 ? Math.round((finalizadas / total) * 100) : 0;
+
+          const card = document.createElement('div');
+          card.className = 'bg-gray-50 p-4 rounded-lg border';
+          card.innerHTML = `
+            <h4 class="font-semibold text-sm mb-3">${rol}</h4>
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs">
+                <span>Total tareas:</span>
+                <span class="font-medium">${total}</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span>Finalizadas:</span>
+                <span class="font-medium text-green-600">${finalizadas}</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span>Vencidas:</span>
+                <span class="font-medium text-red-600">${vencidas}</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span>% Completado:</span>
+                <span class="font-medium">${porcentajeCompletado}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: ${porcentajeCompletado}%"></div>
+              </div>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (error) {
+        console.error("Error al actualizar métricas de responsables:", error);
+      }
+    }
+    function obtenerResponsablePrincipal(rasic) {
+      if (!rasic || !Array.isArray(rasic)) return 'N/A';
+      
+      const roles = ['CEO', 'PMO', 'Finanzas', 'Advisor', 'TF', 'Paralegal'];
+      
+      // Buscar R (Responsible) primero
+      for (let i = 0; i < rasic.length && i < roles.length; i++) {
+        if (rasic[i] === 'R') {
+          return roles[i];
+        }
+      }
+      
+      // Buscar A (Accountable) como alternativa
+      for (let i = 0; i < rasic.length && i < roles.length; i++) {
+        if (rasic[i] === 'A') {
+          return roles[i];
+        }
+      }
+      
+      return 'N/A';
+    }
+
+    function mostrarNotificacion(mensaje, tipo = "info") {
+      const colores = {
+        success: "bg-green-500",
+        error: "bg-red-500",
+        warning: "bg-yellow-500",
+        info: "bg-blue-500"
+      };
+      
+      const existente = document.querySelector(".notificacion-toast");
+      if (existente) {
+        existente.remove();
+      }
+      
+      const notificacion = document.createElement("div");
+      notificacion.className = `fixed bottom-4 right-4 ${colores[tipo]} text-white p-3 rounded-lg shadow-lg z-50 notificacion-toast`;
+      notificacion.textContent = mensaje;
+      
+      document.body.appendChild(notificacion);
+      
+      setTimeout(() => {
+        if (notificacion.parentNode) {
+          notificacion.style.opacity = '0';
+          notificacion.style.transform = 'translateX(100%)';
+          setTimeout(() => {
+            if (notificacion.parentNode) {
+              notificacion.remove();
+            }
+          }, 300);
+        }
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
