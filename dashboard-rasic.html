@@ -38,7 +38,51 @@
         transform: translateX(0);
       }
     }
-  </style>
+    
+    /* Estilos específicos para impresión del dashboard */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      
+      body {
+        background: white !important;
+      }
+      
+      .card-gradient {
+        background: #4F46E5 !important;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+      }
+      
+      .metric-card {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+      }
+      
+      .bg-white {
+        border: 1px solid #ddd !important;
+      }
+      
+      canvas {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+      
+      .bg-green-100 { background-color: #dcfce7 !important; }
+      .bg-yellow-100 { background-color: #fef3c7 !important; }
+      .bg-red-100 { background-color: #fecaca !important; }
+      
+      .bg-red-200 { background-color: #fecaca !important; }
+      .bg-yellow-200 { background-color: #fef3c7 !important; }
+      .bg-green-200 { background-color: #dcfce7 !important; }
+      
+      .text-red-800 { color: #991b1b !important; }
+      .text-yellow-800 { color: #92400e !important; }
+      .text-green-800 { color: #166534 !important; }
+    }
+  </style>  
 </head>
 <body class="bg-gray-50 min-h-screen">
   <!-- Header -->
@@ -48,27 +92,29 @@
       <p class="opacity-90">Análisis y métricas de tareas - <span id="fechaActualizacion"></span></p>
     </div>
   </header>
-
-  <!-- Controles -->
-  <div class="max-w-7xl mx-auto p-4">
-    <div class="flex flex-wrap gap-3 justify-between items-center mb-6">
-      <div class="flex flex-wrap gap-2">
-        <button id="btnActualizar" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
-          🔄 Actualizar Dashboard
-        </button>
-        <button id="btnCargarDatos" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
-          📂 Cargar Datos de Prueba
-        </button>
-      </div>
-      <div class="flex items-center gap-2">
-        <label class="text-sm font-medium">Filtrar por estado:</label>
-        <select id="filtroMetricas" class="p-2 border rounded-lg">
-          <option value="todos">Todos</option>
-          <option value="activas">Solo activas</option>
-          <option value="finalizadas">Solo finalizadas</option>
-        </select>
-      </div>
+<!-- Controles -->
+<div class="max-w-7xl mx-auto p-4">
+  <div class="flex flex-wrap gap-3 justify-between items-center mb-6 no-print">
+    <div class="flex flex-wrap gap-2">
+      <button id="btnActualizar" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+        🔄 Actualizar Dashboard
+      </button>
+      <button id="btnCargarDatos" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+        📂 Cargar Datos de Prueba
+      </button>
+      <button id="btnImprimir" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+        🖨️ Imprimir Dashboard
+      </button>
     </div>
+    <div class="flex items-center gap-2">
+      <label class="text-sm font-medium">Filtrar por estado:</label>
+      <select id="filtroMetricas" class="p-2 border rounded-lg">
+        <option value="todos">Todos</option>
+        <option value="activas">Solo activas</option>
+        <option value="finalizadas">Solo finalizadas</option>
+      </select>
+    </div>
+  </div>
     <!-- KPIs Principales -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="metric-card bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
@@ -242,6 +288,10 @@
       if (filtroMetricas) {
         filtroMetricas.addEventListener('change', actualizarDashboard);
       }
+      const btnImprimir = document.getElementById('btnImprimir');
+    if (btnImprimir) {
+      btnImprimir.addEventListener('click', imprimirDashboard);
+   }  
     }
 
     function cargarDatosDesdeLocalStorage() {
@@ -662,6 +712,33 @@
         }
       }, 3000);
     }
+  function imprimirDashboard() {
+    try {
+      // Actualizar fecha de impresión
+      const fechaElement = document.getElementById('fechaActualizacion');
+      if (fechaElement) {
+        fechaElement.textContent = new Date().toLocaleString();
+      }
+      
+      // Añadir información de impresión al header
+      const header = document.querySelector('header p');
+      const textoOriginal = header.innerHTML;
+      header.innerHTML = `Dashboard impreso el ${new Date().toLocaleDateString()} a las ${new Date().toLocaleTimeString()}`;
+      
+      // Imprimir
+      window.print();
+      
+      // Restaurar texto original después de imprimir
+      setTimeout(() => {
+        header.innerHTML = textoOriginal;
+      }, 1000);
+      
+      mostrarNotificacion("🖨️ Preparando impresión del dashboard...", "info");
+    } catch (error) {
+      console.error("Error al imprimir:", error);
+      mostrarNotificacion("❌ Error al preparar impresión", "error");
+    }
+  }
   </script>
 </body>
-</html>
+</html> 
