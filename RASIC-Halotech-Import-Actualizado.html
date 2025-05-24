@@ -79,7 +79,7 @@
     <button id="btnSave" class="bg-purple-600 text-white px-3 py-1 rounded">💾 Guardar</button>
     <button id="btnPrint" class="bg-blue-500 text-white px-3 py-1 rounded">🖨️ Imprimir</button>
     <button id="btnExport" class="bg-indigo-500 text-white px-3 py-1 rounded">📥 Exportar CSV</button>
-    <button id="btnImport" class="bg-purple-500 text-white px-3 py-1 rounded">📤 Importar Excel</button>
+    <button id="btnImport" class="bg-purple-500 text-white px-3 py-1 rounded">📤 Importar Excel </button><button id="btnDashboard" class="bg-orange-500 text-white px-3 py-1 rounded">📊 Dashboard</button>
   </div>
   
   <!-- Filtros -->
@@ -196,6 +196,7 @@ document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("btnPrint").addEventListener("click", function() { window.print(); });
       document.getElementById("btnExport").addEventListener("click", exportarCSV);
       document.getElementById("btnImport").addEventListener("click", mostrarImportacion);
+      document.getElementById("btnDashboard").addEventListener("click", abrirDashboard);
       
       // Event Listeners para filtros y herramientas
       document.getElementById("filtroEstado").addEventListener("change", filtrarPorEstado);
@@ -1351,6 +1352,21 @@ Gracias.`;
       }
     `;
     document.head.appendChild(style);
+    // Función para abrir el dashboard
+function abrirDashboard() {
+  try {
+    // Guardar datos actuales antes de abrir dashboard
+    guardarTodo();
+    
+    // Abrir dashboard en nueva ventana/pestaña
+    window.open('dashboard-rasic.html', '_blank', 'width=1400,height=900,scrollbars=yes,resizable=yes');
+    
+    mostrarNotificacion("📊 Abriendo dashboard...", "info");
+  } catch (e) {
+    console.error("Error al abrir dashboard:", e);
+    mostrarNotificacion("❌ Error al abrir dashboard", "error");
+  }
+}
   </script>
 </body>
 </html>
