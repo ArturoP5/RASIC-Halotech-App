@@ -92,7 +92,7 @@
       <p class="opacity-90">Análisis y métricas de tareas - <span id="fechaActualizacion"></span></p>
     </div>
   </header>
-<!-- Controles -->
+  <!-- Controles -->
 <div class="max-w-7xl mx-auto p-4">
   <div class="flex flex-wrap gap-3 justify-between items-center mb-6 no-print">
     <div class="flex flex-wrap gap-2">
@@ -106,13 +106,22 @@
         🖨️ Imprimir Dashboard
       </button>
     </div>
-    <div class="flex items-center gap-2">
-      <label class="text-sm font-medium">Filtrar por estado:</label>
-      <select id="filtroMetricas" class="p-2 border rounded-lg">
-        <option value="todos">Todos</option>
-        <option value="activas">Solo activas</option>
-        <option value="finalizadas">Solo finalizadas</option>
-      </select>
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
+        <label class="text-sm font-medium">Filtrar por estado:</label>
+        <select id="filtroMetricas" class="p-2 border rounded-lg">
+          <option value="todos">Todos</option>
+          <option value="activas">Solo activas</option>
+          <option value="finalizadas">Solo finalizadas</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-sm font-medium">Vista tabla:</label>
+        <select id="filtroTabla" class="p-2 border rounded-lg">
+          <option value="alertas">Solo alertas</option>
+          <option value="todas">Todas las tareas</option>
+        </select>
+      </div>
     </div>
   </div>
     <!-- KPIs Principales -->
@@ -185,7 +194,7 @@
     </div>
     <!-- Tabla de Alertas -->
     <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
-      <h3 class="text-lg font-bold mb-4 text-gray-800">⚠️ Tareas que Requieren Atención</h3>
+      <h3 class="text-lg font-bold mb-4 text-gray-800" id="tituloTabla">⚠️ Tareas que Requieren Atención</h3>
       <div class="overflow-x-auto">
         <table class="w-full text-sm" id="tablaAlertas">
           <thead class="bg-gray-100">
@@ -219,48 +228,58 @@
     let chartRoles = null;
 
     // Datos de ejemplo para pruebas
-    const datosEjemplo = [
-      {
-        "id": "1",
-        "tarea": "Definir arquitectura del sistema",
-        "rasic": ["R", "A", "", "S", "I", ""],
-        "fechaActual": "2025-01-15",
-        "deadline": "2025-05-30",
-        "tareaFinalizada": "No",
-        "estado": "🟢",
-        "nuevoDeadline": ""
-      },
-      {
-        "id": "2",
-        "tarea": "Implementar base de datos",
-        "rasic": ["", "A", "R", "", "S", ""],
-        "fechaActual": "2025-01-15",
-        "deadline": "2025-05-25",
-        "tareaFinalizada": "No",
-        "estado": "🟡",
-        "nuevoDeadline": ""
-      },
-      {
-        "id": "3",
-        "tarea": "Diseño de interfaz de usuario",
-        "rasic": ["S", "", "", "R", "I", "A"],
-        "fechaActual": "2025-01-15",
-        "deadline": "2025-05-22",
-        "tareaFinalizada": "No",
-        "estado": "🔴",
-        "nuevoDeadline": ""
-      },
-      {
-        "id": "4",
-        "tarea": "Testing y QA",
-        "rasic": ["", "S", "I", "", "R", "A"],
-        "fechaActual": "2025-01-15",
-        "deadline": "2025-05-20",
-        "tareaFinalizada": "Si",
-        "estado": "🔵",
-        "nuevoDeadline": ""
-      }
-    ];
+ const datosEjemplo = [
+  {
+    "id": "1",
+    "tarea": "Definir arquitectura del sistema",
+    "rasic": ["R", "A", "", "S", "I", ""],
+    "fechaActual": "2025-01-15",
+    "deadline": "2025-05-30",
+    "tareaFinalizada": "No",
+    "estado": "🟢",
+    "nuevoDeadline": ""
+  },
+  {
+    "id": "2",
+    "tarea": "Implementar base de datos",
+    "rasic": ["", "A", "R", "", "S", ""],
+    "fechaActual": "2025-01-15",
+    "deadline": "2025-05-25",
+    "tareaFinalizada": "No",
+    "estado": "🟡",
+    "nuevoDeadline": ""
+  },
+  {
+    "id": "3",
+    "tarea": "Diseño de interfaz de usuario",
+    "rasic": ["S", "", "", "R", "I", "A"],
+    "fechaActual": "2025-01-15",
+    "deadline": "2025-05-22",
+    "tareaFinalizada": "No",
+    "estado": "🔴",
+    "nuevoDeadline": ""
+  },
+  {
+    "id": "4",
+    "tarea": "Testing y QA",
+    "rasic": ["", "S", "I", "", "R", "A"],
+    "fechaActual": "2025-01-15",
+    "deadline": "2025-05-20",
+    "tareaFinalizada": "Si",
+    "estado": "🔵",
+    "nuevoDeadline": ""
+  },
+  {
+    "id": "5",
+    "tarea": "Documentación técnica",
+    "rasic": ["", "", "R", "A", "", "S"],
+    "fechaActual": "2025-01-15",
+    "deadline": "2025-07-01",
+    "tareaFinalizada": "No",
+    "estado": "🟢",
+    "nuevoDeadline": ""
+  }
+];
 
     // Inicializar cuando se carga la página
     document.addEventListener('DOMContentLoaded', function() {
@@ -276,6 +295,7 @@
       const btnActualizar = document.getElementById('btnActualizar');
       const btnCargarDatos = document.getElementById('btnCargarDatos');
       const filtroMetricas = document.getElementById('filtroMetricas');
+      const filtroTabla = document.getElementById('filtroTabla');
 
       if (btnActualizar) {
         btnActualizar.addEventListener('click', actualizarDashboard);
@@ -288,6 +308,9 @@
       if (filtroMetricas) {
         filtroMetricas.addEventListener('change', actualizarDashboard);
       }
+      if (filtroTabla) {
+        filtroTabla.addEventListener('change', actualizarDashboard);
+   }
       const btnImprimir = document.getElementById('btnImprimir');
     if (btnImprimir) {
       btnImprimir.addEventListener('click', imprimirDashboard);
@@ -565,63 +588,88 @@
       }
     }
     function actualizarTablaAlertas(datos) {
-      try {
-        const tbody = document.getElementById('alertasBody');
-        if (!tbody) return;
+  try {
+    const tbody = document.getElementById('alertasBody');
+    const titulo = document.getElementById('tituloTabla');
+    const filtroTablaElement = document.getElementById('filtroTabla');
+    
+    if (!tbody) return;
 
-        tbody.innerHTML = '';
+    tbody.innerHTML = '';
 
-       // Todas las tareas activas (no finalizadas)
-       const tareasAtencion = datos
-         .filter(t => (t.estado === '🔴' || t.estado === '🟡') && t.tareaFinalizada !== 'Si')
-          .sort((a, b) => {
-            if (a.estado === '🔴' && b.estado !== '🔴') return -1;
-            if (b.estado === '🔴' && a.estado !== '🔴') return 1;
-            return new Date(a.deadline) - new Date(b.deadline);
-          });
+    const filtroTabla = filtroTablaElement ? filtroTablaElement.value : 'alertas';
+    let tareasAMostrar = [];
 
-        if (tareasAtencion.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay tareas que requieran atención inmediata</td></tr>';
-          return;
-        }
-
-        tareasAtencion.forEach(tarea => {
-          const responsable = obtenerResponsablePrincipal(tarea.rasic);
-          const deadline = tarea.deadline ? new Date(tarea.deadline) : null;
-          const diasRestantes = deadline ? Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24)) : null;
-
-          const fila = document.createElement('tr');
-          let colorFila = 'bg-gray-50';
-          if (tarea.estado === '🔴') colorFila = 'bg-red-50';
-          else if (tarea.estado === '🟡') colorFila = 'bg-yellow-50';
-          else if (tarea.estado === '🟢') colorFila = 'bg-green-50';
-          else if (tarea.estado === '🔵') colorFila = 'bg-blue-50';
-          fila.className = colorFila; 
-          fila.innerHTML = `
-            <td class="p-3">${(tarea.tarea || '').substring(0, 50)}${(tarea.tarea || '').length > 50 ? '...' : ''}</td>
-            <td class="p-3 text-center">${responsable}</td>
-            <td class="p-3 text-center">${deadline ? deadline.toLocaleDateString() : 'N/A'}</td>
-            <td class="p-3 text-center">
-            <span class="px-2 py-1 rounded text-xs ${
-              tarea.estado === '🔴' ? 'bg-red-200 text-red-800' :
-              tarea.estado === '🟡' ? 'bg-yellow-200 text-yellow-800' :
-              tarea.estado === '🟢' ? 'bg-green-200 text-green-800' :
-              tarea.estado === '🔵' ? 'bg-blue-200 text-blue-800' :
-              'bg-gray-200 text-gray-800' 
-              }">
-                ${diasRestantes === null ? 'N/A' :
-                  diasRestantes < 0 ? Math.abs(diasRestantes) + ' días atrás' : 
-                  diasRestantes === 0 ? 'Hoy' : diasRestantes + ' días'}
-              </span>
-            </td>
-            <td class="p-3 text-center text-lg">${tarea.estado || '⚪'}</td>
-          `;
-          tbody.appendChild(fila);
+    if (filtroTabla === 'todas') {
+      // Mostrar todas las tareas
+      tareasAMostrar = datos.sort((a, b) => {
+        // Ordenar por estado (rojas primero, luego amarillas, luego verdes, luego azules)
+        const prioridadEstado = { '🔴': 1, '🟡': 2, '🟢': 3, '🔵': 4 };
+        const prioridadA = prioridadEstado[a.estado] || 5;
+        const prioridadB = prioridadEstado[b.estado] || 5;
+        
+        if (prioridadA !== prioridadB) return prioridadA - prioridadB;
+        return new Date(a.deadline || '9999-12-31') - new Date(b.deadline || '9999-12-31');
+      });
+      
+      if (titulo) titulo.textContent = '📋 Todas las Tareas';
+    } else {
+      // Mostrar solo alertas (rojas y amarillas) que NO estén finalizadas
+      tareasAMostrar = datos
+        .filter(t => (t.estado === '🔴' || t.estado === '🟡') && t.tareaFinalizada !== 'Si')
+        .sort((a, b) => {
+          if (a.estado === '🔴' && b.estado !== '🔴') return -1;
+          if (b.estado === '🔴' && a.estado !== '🔴') return 1;
+          return new Date(a.deadline || '9999-12-31') - new Date(b.deadline || '9999-12-31');
         });
-      } catch (error) {
-        console.error("Error al actualizar tabla de alertas:", error);
-      }
+      
+      if (titulo) titulo.textContent = '⚠️ Tareas que Requieren Atención';
     }
+
+    if (tareasAMostrar.length === 0) {
+      const mensaje = filtroTabla === 'todas' ? 'No hay tareas para mostrar' : 'No hay tareas que requieran atención inmediata';
+      tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">${mensaje}</td></tr>`;
+      return;
+    }
+
+    tareasAMostrar.forEach(tarea => {
+      const responsable = obtenerResponsablePrincipal(tarea.rasic);
+      const deadline = tarea.deadline ? new Date(tarea.deadline) : null;
+      const diasRestantes = deadline ? Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24)) : null;
+
+      const fila = document.createElement('tr');
+      let colorFila = 'bg-gray-50';
+      if (tarea.estado === '🔴') colorFila = 'bg-red-50';
+      else if (tarea.estado === '🟡') colorFila = 'bg-yellow-50';
+      else if (tarea.estado === '🟢') colorFila = 'bg-green-50';
+      else if (tarea.estado === '🔵') colorFila = 'bg-blue-50';
+      
+      fila.className = colorFila; 
+      fila.innerHTML = `
+        <td class="p-3">${(tarea.tarea || '').substring(0, 50)}${(tarea.tarea || '').length > 50 ? '...' : ''}</td>
+        <td class="p-3 text-center">${responsable}</td>
+        <td class="p-3 text-center">${deadline ? deadline.toLocaleDateString() : 'N/A'}</td>
+        <td class="p-3 text-center">
+          <span class="px-2 py-1 rounded text-xs ${
+            tarea.estado === '🔴' ? 'bg-red-200 text-red-800' :
+            tarea.estado === '🟡' ? 'bg-yellow-200 text-yellow-800' :
+            tarea.estado === '🟢' ? 'bg-green-200 text-green-800' :
+            tarea.estado === '🔵' ? 'bg-blue-200 text-blue-800' :
+            'bg-gray-200 text-gray-800' 
+          }">
+            ${diasRestantes === null ? 'N/A' :
+              diasRestantes < 0 ? Math.abs(diasRestantes) + ' días atrás' : 
+              diasRestantes === 0 ? 'Hoy' : diasRestantes + ' días'}
+          </span>
+        </td>
+        <td class="p-3 text-center text-lg">${tarea.estado || '⚪'}</td>
+      `;
+      tbody.appendChild(fila);
+    });
+  } catch (error) {
+    console.error("Error al actualizar tabla de alertas:", error);
+  }
+}
 
     function actualizarMetricasResponsables(datos) {
       try {
