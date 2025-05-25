@@ -82,7 +82,7 @@
       .text-yellow-800 { color: #92400e !important; }
       .text-green-800 { color: #166534 !important; }
     }
-  </style>  
+  </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
   <!-- Header -->
@@ -501,9 +501,9 @@
 
         container.innerHTML = '';
 
-        // Filtrar tareas con deadline y no finalizadas
-        const tareasConDeadline = datos
-          .filter(t => t.deadline && t.tareaFinalizada !== 'Si')
+      // Filtrar tareas con deadline
+      const tareasConDeadline = datos
+          .filter(t => t.deadline)
           .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
           .slice(0, 10); // Solo las próximas 10
 
@@ -519,17 +519,20 @@
           
           let colorClase = 'bg-gray-100';
           let estadoTexto = 'Sin estado';
-          
+
           if (tarea.estado === '🟢') {
-            colorClase = 'bg-green-100 border-l-4 border-green-500';
-            estadoTexto = 'En plazo';
-          } else if (tarea.estado === '🟡') {
-            colorClase = 'bg-yellow-100 border-l-4 border-yellow-500';
-            estadoTexto = 'Próximo a vencer';
-          } else if (tarea.estado === '🔴') {
-            colorClase = 'bg-red-100 border-l-4 border-red-500';
-            estadoTexto = 'Vencida';
-          }
+           colorClase = 'bg-green-100 border-l-4 border-green-500';
+           estadoTexto = 'En plazo';
+         } else if (tarea.estado === '🟡') {
+          colorClase = 'bg-yellow-100 border-l-4 border-yellow-500';
+          estadoTexto = 'Próximo a vencer';
+        } else if (tarea.estado === '🔴') {
+  colorClase = 'bg-red-100 border-l-4 border-red-500';
+  estadoTexto = 'Vencida';
+} else if (tarea.estado === '🔵') {
+          colorClase = 'bg-blue-100 border-l-4 border-blue-500';
+          estadoTexto = 'Finalizada';
+        }
 
           const item = document.createElement('div');
           item.className = `${colorClase} p-4 rounded-lg`;
@@ -543,9 +546,11 @@
               </div>
               <div class="text-right">
                 <span class="inline-block px-2 py-1 rounded text-xs font-medium ${
-                  diasRestantes < 0 ? 'bg-red-200 text-red-800' :
-                  diasRestantes <= 3 ? 'bg-yellow-200 text-yellow-800' :
-                  'bg-green-200 text-green-800'
+                  tarea.estado === '🔴' ? 'bg-red-200 text-red-800' :
+                  tarea.estado === '🟡' ? 'bg-yellow-200 text-yellow-800' :
+                  tarea.estado === '🟢' ? 'bg-green-200 text-green-800' :
+                  tarea.estado === '🔵' ? 'bg-blue-200 text-blue-800' :
+              'bg-gray-200 text-gray-800'   
                 }">
                   ${diasRestantes < 0 ? `${Math.abs(diasRestantes)} días atrás` : 
                     diasRestantes === 0 ? 'Hoy' : `${diasRestantes} días`}
@@ -566,9 +571,9 @@
 
         tbody.innerHTML = '';
 
-        // Tareas que requieren atención (vencidas o próximas a vencer)
-        const tareasAtencion = datos
-          .filter(t => (t.estado === '🔴' || t.estado === '🟡') && t.tareaFinalizada !== 'Si')
+       // Todas las tareas activas (no finalizadas)
+       const tareasAtencion = datos
+         .filter(t => (t.estado === '🔴' || t.estado === '🟡') && t.tareaFinalizada !== 'Si')
           .sort((a, b) => {
             if (a.estado === '🔴' && b.estado !== '🔴') return -1;
             if (b.estado === '🔴' && a.estado !== '🔴') return 1;
@@ -586,16 +591,23 @@
           const diasRestantes = deadline ? Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24)) : null;
 
           const fila = document.createElement('tr');
-          fila.className = tarea.estado === '🔴' ? 'bg-red-50' : 'bg-yellow-50';
+          let colorFila = 'bg-gray-50';
+          if (tarea.estado === '🔴') colorFila = 'bg-red-50';
+          else if (tarea.estado === '🟡') colorFila = 'bg-yellow-50';
+          else if (tarea.estado === '🟢') colorFila = 'bg-green-50';
+          else if (tarea.estado === '🔵') colorFila = 'bg-blue-50';
+          fila.className = colorFila; 
           fila.innerHTML = `
             <td class="p-3">${(tarea.tarea || '').substring(0, 50)}${(tarea.tarea || '').length > 50 ? '...' : ''}</td>
             <td class="p-3 text-center">${responsable}</td>
             <td class="p-3 text-center">${deadline ? deadline.toLocaleDateString() : 'N/A'}</td>
             <td class="p-3 text-center">
-              <span class="px-2 py-1 rounded text-xs ${
-                diasRestantes !== null && diasRestantes < 0 ? 'bg-red-200 text-red-800' :
-                diasRestantes !== null && diasRestantes <= 3 ? 'bg-yellow-200 text-yellow-800' :
-                'bg-green-200 text-green-800'
+            <span class="px-2 py-1 rounded text-xs ${
+              tarea.estado === '🔴' ? 'bg-red-200 text-red-800' :
+              tarea.estado === '🟡' ? 'bg-yellow-200 text-yellow-800' :
+              tarea.estado === '🟢' ? 'bg-green-200 text-green-800' :
+              tarea.estado === '🔵' ? 'bg-blue-200 text-blue-800' :
+              'bg-gray-200 text-gray-800' 
               }">
                 ${diasRestantes === null ? 'N/A' :
                   diasRestantes < 0 ? Math.abs(diasRestantes) + ' días atrás' : 
