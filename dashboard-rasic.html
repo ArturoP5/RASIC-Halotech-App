@@ -6,6 +6,7 @@
   <title>Dashboard RASIC Halotech</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     .card-gradient {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -82,7 +83,221 @@
       .text-yellow-800 { color: #92400e !important; }
       .text-green-800 { color: #166534 !important; }
     }
-  </style>
+
+    /* NUEVOS ESTILOS - Estilos para el modal de exportación */
+    .modal-backdrop {
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .export-option {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    
+    .export-option:hover {
+      background-color: #f3f4f6;
+      border-color: #3b82f6;
+    }
+    
+    .export-option.selected {
+      background-color: #dbeafe;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px #3b82f6;
+    }
+    /* Estilos para el modal de configuración de alertas */
+.alert-config-option {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.alert-config-option:hover {
+  background-color: #f9fafb;
+}
+
+.alert-config-option.active {
+  background-color: #fef3c7;
+  border-color: #f59e0b;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #10b981;
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+/* Estilos para la vista de calendario */
+.calendario-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.calendario-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calendario-nav-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.calendario-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.calendario-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: #e5e7eb;
+}
+
+.calendario-dia-header {
+  background: #f9fafb;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.calendario-dia {
+  background: white;
+  min-height: 120px;
+  padding: 0.5rem;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.calendario-dia:hover {
+  background: #f9fafb;
+}
+
+.calendario-dia.otro-mes {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.calendario-dia.hoy {
+  background: #dbeafe;
+  border: 2px solid #3b82f6;
+}
+
+.calendario-dia-numero {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.calendario-tarea {
+  background: #e5e7eb;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin-bottom: 2px;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendario-tarea.verde {
+  background: #dcfce7;
+  color: #166534;
+  border-left: 3px solid #10b981;
+}
+
+.calendario-tarea.amarillo {
+  background: #fef3c7;
+  color: #92400e;
+  border-left: 3px solid #f59e0b;
+}
+
+.calendario-tarea.rojo {
+  background: #fecaca;
+  color: #991b1b;
+  border-left: 3px solid #ef4444;
+}
+
+.calendario-tarea.azul {
+  background: #dbeafe;
+  color: #1e40af;
+  border-left: 3px solid #3b82f6;
+}
+
+.calendario-mas-tareas {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .calendario-dia {
+    min-height: 80px;
+    padding: 0.25rem;
+  }
+  
+  .calendario-tarea {
+    font-size: 0.625rem;
+    padding: 1px 2px;
+  }
+  
+  .calendario-dia-numero {
+    font-size: 0.75rem;
+  }
+}
+</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
   <!-- Header -->
@@ -105,6 +320,18 @@
       <button id="btnImprimir" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
         🖨️ Imprimir Dashboard
       </button>
+      <!-- NUEVO: Botón de exportación -->
+      <button id="btnExportar" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors">
+      📥 Exportar Datos
+    </button>
+      <!-- NUEVO: Botón de configuración de alertas -->
+      <button id="btnConfigAlertas" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors">
+       🔔 Configurar Alertas
+   </button>
+   <!-- NUEVO: Botón de vista calendario -->
+<button id="btnVistaCalendario" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition-colors">
+  📅 Vista Calendario
+</button>
     </div>
     <div class="flex items-center gap-4">
       <div class="flex items-center gap-2">
@@ -220,12 +447,33 @@
         <!-- Se llena dinámicamente -->
       </div>
     </div>
+    <!-- NUEVO: Vista de Calendario (inicialmente oculta) -->
+<div id="vistaCalendario" class="calendario-container hidden">
+  <div class="calendario-header">
+    <button id="btnMesAnterior" class="calendario-nav-btn">◀ Anterior</button>
+    <h3 id="calendarioTitulo" class="text-xl font-bold">Mayo 2025</h3>
+    <button id="btnMesSiguiente" class="calendario-nav-btn">Siguiente ▶</button>
+  </div>
+  
+  <div class="calendario-grid" id="calendarioGrid">
+    <!-- Se llena dinámicamente -->
+  </div>
+</div>
   </div>
   <script>
     // Variables globales
     let datosRASIC = [];
     let chartEstados = null;
     let chartRoles = null;
+    let formatoExportacionSeleccionado = null;
+    let configuracionAlertas = {
+  habilitado: true,
+  diasAviso: [3, 7, 14],
+  notificacionesNavegador: true,
+  sonido: false
+};
+let vistaActual = 'dashboard'; // 'dashboard' o 'calendario'
+let fechaCalendarioActual = new Date();
 
     // Datos de ejemplo para pruebas
  const datosEjemplo = [
@@ -283,14 +531,26 @@
 
     // Inicializar cuando se carga la página
     document.addEventListener('DOMContentLoaded', function() {
-      inicializarEventListeners();
-      cargarDatosDesdeLocalStorage();
-      if (datosRASIC.length === 0) {
-        mostrarNotificacion("ℹ️ No hay datos. Usa 'Cargar Datos de Prueba' para ver el dashboard en acción.", "info");
-      } else {
-        actualizarDashboard();
-      }
-    });
+  inicializarEventListeners();
+  cargarDatosDesdeLocalStorage();
+  
+  // NUEVO: Cargar configuración de alertas
+  const configGuardada = localStorage.getItem('configuracionAlertas');
+  if (configGuardada) {
+    configuracionAlertas = JSON.parse(configGuardada);
+  }
+  
+  if (datosRASIC.length === 0) {
+    mostrarNotificacion("ℹ️ No hay datos. Usa 'Cargar Datos de Prueba' para ver el dashboard en acción.", "info");
+  } else {
+    actualizarDashboard();
+    
+    // NUEVO: Verificar alertas después de cargar datos
+    setTimeout(() => {
+      verificarAlertasProximas();
+    }, 2000); // Esperar 2 segundos para que cargue todo
+  }
+});
     function inicializarEventListeners() {
       const btnActualizar = document.getElementById('btnActualizar');
       const btnCargarDatos = document.getElementById('btnCargarDatos');
@@ -315,6 +575,48 @@
     if (btnImprimir) {
       btnImprimir.addEventListener('click', imprimirDashboard);
    }  
+   // NUEVO: Event listeners para exportación
+    const btnExportar = document.getElementById('btnExportar');
+    if (btnExportar) {
+  btnExportar.addEventListener('click', mostrarModalExportacion);
+}
+
+    // Modal de exportación
+    document.getElementById('btnCerrarExport').addEventListener('click', cerrarModalExportacion);
+    document.getElementById('btnEjecutarExport').addEventListener('click', ejecutarExportacion);
+
+    // Opciones de exportación
+    document.querySelectorAll('.export-option').forEach(option => {
+     option.addEventListener('click', function() {
+    seleccionarFormatoExportacion(this.dataset.format);
+  });
+});
+// NUEVO: Event listeners para configuración de alertas
+const btnConfigAlertas = document.getElementById('btnConfigAlertas');
+if (btnConfigAlertas) {
+  btnConfigAlertas.addEventListener('click', mostrarModalConfigAlertas);
+}
+
+// Modal de configuración de alertas
+document.getElementById('btnCerrarConfigAlertas').addEventListener('click', cerrarModalConfigAlertas);
+document.getElementById('btnGuardarConfigAlertas').addEventListener('click', guardarConfiguracionAlertas);
+
+// NUEVO: Event listeners para vista calendario
+const btnVistaCalendario = document.getElementById('btnVistaCalendario');
+if (btnVistaCalendario) {
+  btnVistaCalendario.addEventListener('click', alternarVista);
+}
+
+// Navegación del calendario
+document.getElementById('btnMesAnterior').addEventListener('click', () => {
+  fechaCalendarioActual.setMonth(fechaCalendarioActual.getMonth() - 1);
+  actualizarCalendario();
+});
+
+document.getElementById('btnMesSiguiente').addEventListener('click', () => {
+  fechaCalendarioActual.setMonth(fechaCalendarioActual.getMonth() + 1);
+  actualizarCalendario();
+});
     }
 
     function cargarDatosDesdeLocalStorage() {
@@ -772,33 +1074,661 @@
         }
       }, 3000);
     }
-  function imprimirDashboard() {
-    try {
-      // Actualizar fecha de impresión
-      const fechaElement = document.getElementById('fechaActualizacion');
-      if (fechaElement) {
-        fechaElement.textContent = new Date().toLocaleString();
-      }
-      
-      // Añadir información de impresión al header
-      const header = document.querySelector('header p');
-      const textoOriginal = header.innerHTML;
-      header.innerHTML = `Dashboard impreso el ${new Date().toLocaleDateString()} a las ${new Date().toLocaleTimeString()}`;
-      
-      // Imprimir
-      window.print();
-      
-      // Restaurar texto original después de imprimir
-      setTimeout(() => {
-        header.innerHTML = textoOriginal;
-      }, 1000);
-      
-      mostrarNotificacion("🖨️ Preparando impresión del dashboard...", "info");
-    } catch (error) {
-      console.error("Error al imprimir:", error);
-      mostrarNotificacion("❌ Error al preparar impresión", "error");
+
+function imprimirDashboard() {
+  try {
+    // Actualizar fecha de impresión
+    const fechaElement = document.getElementById('fechaActualizacion');
+    if (fechaElement) {
+      fechaElement.textContent = new Date().toLocaleString();
     }
+    
+    // Añadir información de impresión al header
+    const header = document.querySelector('header p');
+    const textoOriginal = header.innerHTML;
+    header.innerHTML = `Dashboard impreso el ${new Date().toLocaleDateString()} a las ${new Date().toLocaleTimeString()}`;
+    
+    // Imprimir
+    window.print();
+    
+    // Restaurar texto original después de imprimir
+    setTimeout(() => {
+      header.innerHTML = textoOriginal;
+    }, 1000);
+    
+    mostrarNotificacion("🖨️ Preparando impresión del dashboard...", "info");
+  } catch (error) {
+    console.error("Error al imprimir:", error);
+    mostrarNotificacion("❌ Error al preparar impresión", "error");
   }
-  </script>
+}
+
+// NUEVAS FUNCIONES DE EXPORTACIÓN
+function mostrarModalExportacion() {
+  document.getElementById('modalExportacion').classList.remove('hidden');
+  document.getElementById('modalExportacion').classList.add('flex');
+  formatoExportacionSeleccionado = null;
+  actualizarBotonExportar();
+}
+
+function cerrarModalExportacion() {
+  document.getElementById('modalExportacion').classList.add('hidden');
+  document.getElementById('modalExportacion').classList.remove('flex');
+  
+  document.querySelectorAll('.export-option').forEach(option => {
+    option.classList.remove('selected');
+  });
+}
+
+function seleccionarFormatoExportacion(formato) {
+  document.querySelectorAll('.export-option').forEach(option => {
+    option.classList.remove('selected');
+  });
+  
+  document.querySelector(`[data-format="${formato}"]`).classList.add('selected');
+  formatoExportacionSeleccionado = formato;
+  actualizarBotonExportar();
+}
+
+function actualizarBotonExportar() {
+  const boton = document.getElementById('btnEjecutarExport');
+  if (formatoExportacionSeleccionado) {
+    boton.disabled = false;
+    boton.textContent = `Exportar ${getFormatoTexto(formatoExportacionSeleccionado)}`;
+  } else {
+    boton.disabled = true;
+    boton.textContent = 'Exportar';
+  }
+}
+
+function getFormatoTexto(formato) {
+  const formatos = {
+    'excel': 'Excel',
+    'csv': 'CSV', 
+    'summary': 'Resumen'
+  };
+  return formatos[formato] || 'Datos';
+}
+
+function ejecutarExportacion() {
+  if (!formatoExportacionSeleccionado) return;
+
+  try {
+    const filtroElement = document.getElementById('filtroMetricas');
+    const filtro = filtroElement ? filtroElement.value : 'todos';
+    const datosFiltrados = filtrarDatos(datosRASIC, filtro);
+
+    switch (formatoExportacionSeleccionado) {
+      case 'excel':
+        exportarExcel(datosFiltrados);
+        break;
+      case 'csv':
+        exportarCSV(datosFiltrados);
+        break;
+      case 'summary':
+        exportarResumenEjecutivo(datosFiltrados);
+        break;
+    }
+
+    cerrarModalExportacion();
+    mostrarNotificacion(`✅ Datos exportados en formato ${getFormatoTexto(formatoExportacionSeleccionado)}`, "success");
+  } catch (error) {
+    console.error("Error al exportar:", error);
+    mostrarNotificacion("❌ Error al exportar datos", "error");
+  }
+}
+
+function exportarExcel(datos) {
+  const wb = XLSX.utils.book_new();
+  
+  // Datos de tareas
+  const wsData = [['Tarea', 'CEO', 'PMO', 'Finanzas', 'Advisor', 'Tozzini F.', 'Paralegal', 'Fecha Actual', 'Deadline', 'Finalizada', 'Estado']];
+  
+  datos.forEach(tarea => {
+    wsData.push([
+      tarea.tarea || '',
+      tarea.rasic?.[0] || '',
+      tarea.rasic?.[1] || '',
+      tarea.rasic?.[2] || '',
+      tarea.rasic?.[3] || '',
+      tarea.rasic?.[4] || '',
+      tarea.rasic?.[5] || '',
+      tarea.fechaActual || '',
+      tarea.deadline || '',
+      tarea.tareaFinalizada || 'No',
+      getEstadoTexto(tarea.estado)
+    ]);
+  });
+  
+  const ws1 = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws1, "Tareas");
+  
+  const fecha = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `Dashboard_RASIC_${fecha}.xlsx`);
+}
+
+function exportarCSV(datos) {
+  let csv = 'Tarea,CEO,PMO,Finanzas,Advisor,Tozzini F.,Paralegal,Fecha Actual,Deadline,Finalizada,Estado\n';
+  
+  datos.forEach(tarea => {
+    const fila = [
+      `"${(tarea.tarea || '').replace(/"/g, '""')}"`,
+      tarea.rasic?.[0] || '',
+      tarea.rasic?.[1] || '',
+      tarea.rasic?.[2] || '',
+      tarea.rasic?.[3] || '',
+      tarea.rasic?.[4] || '',
+      tarea.rasic?.[5] || '',
+      tarea.fechaActual || '',
+      tarea.deadline || '',
+      tarea.tareaFinalizada || 'No',
+      getEstadoTexto(tarea.estado)
+    ];
+    csv += fila.join(',') + '\n';
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const fecha = new Date().toISOString().split('T')[0];
+  
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Tareas_RASIC_${fecha}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+
+function exportarResumenEjecutivo(datos) {
+  const total = datos.length;
+  const enPlazo = datos.filter(t => t.estado === '🟢').length;
+  const vencidas = datos.filter(t => t.estado === '🔴').length;
+  const finalizadas = datos.filter(t => t.estado === '🔵').length;
+  
+  let resumen = `RESUMEN EJECUTIVO - Dashboard RASIC Halotech\n`;
+  resumen += `Fecha: ${new Date().toLocaleDateString()}\n\n`;
+  resumen += `=== MÉTRICAS PRINCIPALES ===\n`;
+  resumen += `• Total de tareas: ${total}\n`;
+  resumen += `• Tareas en plazo: ${enPlazo} (${Math.round((enPlazo / total) * 100)}%)\n`;
+  resumen += `• Tareas vencidas: ${vencidas} (${Math.round((vencidas / total) * 100)}%)\n`;
+  resumen += `• Tareas finalizadas: ${finalizadas} (${Math.round((finalizadas / total) * 100)}%)\n`;
+  
+  const blob = new Blob([resumen], { type: 'text/plain;charset=utf-8;' });
+  const link = document.createElement('a');
+  const fecha = new Date().toISOString().split('T')[0];
+  
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `Resumen_RASIC_${fecha}.txt`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function getEstadoTexto(estado) {
+  const estados = {
+    "🟢": "En plazo",
+    "🟡": "Próximo a vencer", 
+    "🔴": "Vencida",
+    "🔵": "Finalizada",
+    "⚪": "Sin fecha"
+  };
+  return estados[estado] || "Sin estado";
+}
+// NUEVAS FUNCIONES DE ALERTAS
+
+function mostrarModalConfigAlertas() {
+  document.getElementById('modalConfigAlertas').classList.remove('hidden');
+  document.getElementById('modalConfigAlertas').classList.add('flex');
+  cargarConfiguracionActual();
+}
+
+function cerrarModalConfigAlertas() {
+  document.getElementById('modalConfigAlertas').classList.add('hidden');
+  document.getElementById('modalConfigAlertas').classList.remove('flex');
+}
+
+function cargarConfiguracionActual() {
+  // Cargar configuración desde localStorage
+  const config = JSON.parse(localStorage.getItem('configuracionAlertas')) || configuracionAlertas;
+  
+  // Activar/desactivar alertas
+  document.getElementById('switchAlertas').checked = config.habilitado;
+  
+  // Días de aviso
+  document.querySelectorAll('input[value="3"], input[value="7"], input[value="14"]').forEach(checkbox => {
+    checkbox.checked = config.diasAviso.includes(parseInt(checkbox.value));
+  });
+  
+  // Tipo de notificaciones
+  document.getElementById('checkNotifNavegador').checked = config.notificacionesNavegador;
+  document.getElementById('checkSonido').checked = config.sonido;
+}
+
+function guardarConfiguracionAlertas() {
+  // Recoger configuración del modal
+  const nuevaConfig = {
+    habilitado: document.getElementById('switchAlertas').checked,
+    diasAviso: [],
+    notificacionesNavegador: document.getElementById('checkNotifNavegador').checked,
+    sonido: document.getElementById('checkSonido').checked
+  };
+  
+  // Recoger días seleccionados
+  document.querySelectorAll('input[value="3"], input[value="7"], input[value="14"]').forEach(checkbox => {
+    if (checkbox.checked) {
+      nuevaConfig.diasAviso.push(parseInt(checkbox.value));
+    }
+  });
+  
+  // Guardar en variables globales y localStorage
+  configuracionAlertas = nuevaConfig;
+  localStorage.setItem('configuracionAlertas', JSON.stringify(nuevaConfig));
+  
+  // Solicitar permisos de notificación si están habilitadas
+  if (nuevaConfig.notificacionesNavegador && nuevaConfig.habilitado) {
+    solicitarPermisoNotificaciones();
+  }
+  
+  cerrarModalConfigAlertas();
+  mostrarNotificacion("✅ Configuración de alertas guardada", "success");
+  
+  // Verificar alertas inmediatamente
+  verificarAlertasProximas();
+}
+
+function solicitarPermisoNotificaciones() {
+  if ("Notification" in window) {
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then(function (permission) {
+        if (permission === "granted") {
+          mostrarNotificacion("🔔 Notificaciones activadas correctamente", "success");
+        } else {
+          mostrarNotificacion("⚠️ Permisos de notificación denegados", "warning");
+        }
+      });
+    }
+  } else {
+    mostrarNotificacion("⚠️ Este navegador no soporta notificaciones", "warning");
+  }
+}
+
+function verificarAlertasProximas() {
+  if (!configuracionAlertas.habilitado) return;
+  
+  const alertasEncontradas = [];
+  const hoy = new Date();
+  
+  datosRASIC.forEach(tarea => {
+    // Solo verificar tareas activas (no finalizadas)
+    if (tarea.tareaFinalizada === 'Si' || !tarea.deadline) return;
+    
+    const deadline = new Date(tarea.deadline);
+    const diasRestantes = Math.ceil((deadline - hoy) / (1000 * 60 * 60 * 24));
+    
+    // Verificar si está en los días de aviso configurados
+    if (configuracionAlertas.diasAviso.includes(diasRestantes)) {
+      alertasEncontradas.push({
+        tarea: tarea.tarea,
+        dias: diasRestantes,
+        responsable: obtenerResponsablePrincipal(tarea.rasic)
+      });
+    }
+  });
+  
+  // Mostrar alertas encontradas
+  if (alertasEncontradas.length > 0) {
+    mostrarAlertas(alertasEncontradas);
+  }
+}
+
+function mostrarAlertas(alertas) {
+  // Notificación del navegador
+  if (configuracionAlertas.notificacionesNavegador && "Notification" in window && Notification.permission === "granted") {
+    alertas.forEach(alerta => {
+      const mensaje = alerta.dias === 0 ? 
+        `¡Tarea vence HOY!` : 
+        `Tarea vence en ${alerta.dias} día${alerta.dias > 1 ? 's' : ''}`;
+        
+      new Notification(`🔔 RASIC Halotech - ${mensaje}`, {
+        body: `${alerta.tarea.substring(0, 100)}... (Responsable: ${alerta.responsable})`,
+        icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzM5ODBGRiIvPgo8dGV4dCB4PSI1IiB5PSIyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSJ3aGl0ZSI+UjwvdGV4dD4KPC9zdmc+',
+        tag: `rasic-alert-${alerta.tarea.substring(0, 20)}`
+      });
+    });
+  }
+  
+  // Sonido de alerta (opcional)
+  if (configuracionAlertas.sonido) {
+    reproducirSonidoAlerta();
+  }
+  
+  // Notificación en pantalla
+  const totalAlertas = alertas.length;
+  const mensaje = totalAlertas === 1 ? 
+    `🔔 1 tarea requiere atención` : 
+    `🔔 ${totalAlertas} tareas requieren atención`;
+  
+  mostrarNotificacion(mensaje, "warning");
+}
+
+function reproducirSonidoAlerta() {
+  // Crear un beep simple usando Web Audio API
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+  } catch (error) {
+    console.log("No se pudo reproducir el sonido de alerta:", error);
+  }
+}
+// NUEVAS FUNCIONES DE CALENDARIO
+
+function alternarVista() {
+  const vistaDashboard = document.querySelectorAll('.bg-white.p-6.rounded-xl.shadow-lg, .grid.grid-cols-1');
+  const vistaCalendario = document.getElementById('vistaCalendario');
+  const boton = document.getElementById('btnVistaCalendario');
+  
+  if (vistaActual === 'dashboard') {
+    // Cambiar a vista calendario
+    vistaDashboard.forEach(elemento => {
+      if (!elemento.closest('#modalExportacion') && !elemento.closest('#modalConfigAlertas')) {
+        elemento.style.display = 'none';
+      }
+    });
+    
+    vistaCalendario.classList.remove('hidden');
+    boton.textContent = '📊 Vista Dashboard';
+    boton.className = 'bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors';
+    vistaActual = 'calendario';
+    
+    actualizarCalendario();
+  } else {
+    // Cambiar a vista dashboard
+    vistaDashboard.forEach(elemento => {
+      elemento.style.display = '';
+    });
+    
+    vistaCalendario.classList.add('hidden');
+    boton.textContent = '📅 Vista Calendario';
+    boton.className = 'bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition-colors';
+    vistaActual = 'dashboard';
+  }
+}
+
+function actualizarCalendario() {
+  const grid = document.getElementById('calendarioGrid');
+  const titulo = document.getElementById('calendarioTitulo');
+  
+  if (!grid || !titulo) return;
+  
+  // Actualizar título
+  const meses = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  
+  titulo.textContent = `${meses[fechaCalendarioActual.getMonth()]} ${fechaCalendarioActual.getFullYear()}`;
+  
+  // Limpiar grid
+  grid.innerHTML = '';
+  
+  // Añadir headers de días
+  const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  diasSemana.forEach(dia => {
+    const header = document.createElement('div');
+    header.className = 'calendario-dia-header';
+    header.textContent = dia;
+    grid.appendChild(header);
+  });
+  
+  // Calcular días del mes
+  const año = fechaCalendarioActual.getFullYear();
+  const mes = fechaCalendarioActual.getMonth();
+  
+  const primerDia = new Date(año, mes, 1);
+  const ultimoDia = new Date(año, mes + 1, 0);
+  const primerDiaSemana = primerDia.getDay();
+  
+  // Días del mes anterior
+  for (let i = primerDiaSemana - 1; i >= 0; i--) {
+    const fecha = new Date(año, mes, -i);
+    crearDiaCalendario(fecha, true);
+  }
+  
+  // Días del mes actual
+  for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
+    const fecha = new Date(año, mes, dia);
+    crearDiaCalendario(fecha, false);
+  }
+  
+  // Días del mes siguiente para completar la semana
+  const diasMostrados = primerDiaSemana + ultimoDia.getDate();
+  const diasFaltantes = 42 - diasMostrados; // 6 semanas x 7 días
+  
+  for (let dia = 1; dia <= diasFaltantes; dia++) {
+    const fecha = new Date(año, mes + 1, dia);
+    crearDiaCalendario(fecha, true);
+  }
+}
+
+function crearDiaCalendario(fecha, otroMes) {
+  const grid = document.getElementById('calendarioGrid');
+  const hoy = new Date();
+  
+  const diaElemento = document.createElement('div');
+  diaElemento.className = 'calendario-dia';
+  
+  if (otroMes) {
+    diaElemento.classList.add('otro-mes');
+  }
+  
+  // Marcar día actual
+  if (fecha.toDateString() === hoy.toDateString()) {
+    diaElemento.classList.add('hoy');
+  }
+  
+  // Número del día
+  const numero = document.createElement('div');
+  numero.className = 'calendario-dia-numero';
+  numero.textContent = fecha.getDate();
+  diaElemento.appendChild(numero);
+  
+  // Buscar tareas para este día
+  const fechaStr = fecha.toISOString().split('T')[0];
+  const tareasDelDia = datosRASIC.filter(tarea => tarea.deadline === fechaStr);
+  
+  // Mostrar máximo 3 tareas, el resto como "+X más"
+  const maxTareas = 3;
+  tareasDelDia.slice(0, maxTareas).forEach(tarea => {
+    const tareaElemento = document.createElement('div');
+    tareaElemento.className = 'calendario-tarea';
+    
+    // Añadir clase de color según estado
+    const colorClase = obtenerColorCalendario(tarea.estado);
+    if (colorClase) {
+      tareaElemento.classList.add(colorClase);
+    }
+    
+    // Texto de la tarea (máximo 25 caracteres)
+    tareaElemento.textContent = (tarea.tarea || '').substring(0, 25);
+    if ((tarea.tarea || '').length > 25) {
+      tareaElemento.textContent += '...';
+    }
+    
+    // Tooltip con información completa
+    tareaElemento.title = `${tarea.tarea}\nResponsable: ${obtenerResponsablePrincipal(tarea.rasic)}\nEstado: ${getEstadoTexto(tarea.estado)}`;
+    
+    diaElemento.appendChild(tareaElemento);
+  });
+  
+  // Mostrar "+X más" si hay más tareas
+  if (tareasDelDia.length > maxTareas) {
+    const masElemento = document.createElement('div');
+    masElemento.className = 'calendario-mas-tareas';
+    masElemento.textContent = `+${tareasDelDia.length - maxTareas} más`;
+    diaElemento.appendChild(masElemento);
+  }
+  
+  // Event listener para click en día
+  diaElemento.addEventListener('click', () => {
+    mostrarDetallesDia(fecha, tareasDelDia);
+  });
+  
+  grid.appendChild(diaElemento);
+}
+
+function obtenerColorCalendario(estado) {
+  const colores = {
+    '🟢': 'verde',
+    '🟡': 'amarillo', 
+    '🔴': 'rojo',
+    '🔵': 'azul'
+  };
+  return colores[estado] || '';
+}
+
+function mostrarDetallesDia(fecha, tareas) {
+  if (tareas.length === 0) {
+    mostrarNotificacion(`📅 No hay tareas para el ${fecha.toLocaleDateString()}`, "info");
+    return;
+  }
+  
+  const detalles = tareas.map(tarea => {
+    const responsable = obtenerResponsablePrincipal(tarea.rasic);
+    const estado = getEstadoTexto(tarea.estado);
+    return `• ${tarea.tarea} (${responsable} - ${estado})`;
+  }).join('\n');
+  
+  alert(`📅 Tareas para ${fecha.toLocaleDateString()}:\n\n${detalles}`);
+}
+</script>
+
+<!-- NUEVO: Modal de Exportación -->
+<div id="modalExportacion" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50">
+<div class="bg-white rounded-lg shadow-xl p-6 m-4 w-full max-w-md">
+  <h3 class="text-lg font-bold mb-4 text-gray-800">📥 Exportar Datos</h3>
+  
+  <div class="space-y-3 mb-6">
+    <div class="export-option border-2 rounded-lg p-4" data-format="excel">
+      <div class="flex items-center justify-between">
+        <div>
+          <h4 class="font-semibold text-green-600">📊 Excel (.xlsx)</h4>
+          <p class="text-sm text-gray-600">Incluye colores, métricas y gráficos</p>
+        </div>
+        <div class="text-2xl">✅</div>
+      </div>
+    </div>
+    
+    <div class="export-option border-2 rounded-lg p-4" data-format="csv">
+      <div class="flex items-center justify-between">
+        <div>
+          <h4 class="font-semibold text-blue-600">📄 CSV</h4>
+          <p class="text-sm text-gray-600">Datos tabulares para análisis</p>
+        </div>
+        <div class="text-2xl">📊</div>
+      </div>
+    </div>
+    
+    <div class="export-option border-2 rounded-lg p-4" data-format="summary">
+      <div class="flex items-center justify-between">
+        <div>
+          <h4 class="font-semibold text-purple-600">📋 Resumen Ejecutivo</h4>
+          <p class="text-sm text-gray-600">KPIs y métricas principales</p>
+        </div>
+        <div class="text-2xl">📈</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="flex justify-end gap-3">
+    <button id="btnCerrarExport" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+      Cancelar
+    </button>
+    <button id="btnEjecutarExport" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50" disabled>
+      Exportar
+    </button>
+  </div>
+</div>
+</div>
+<!-- NUEVO: Modal de Configuración de Alertas -->
+<div id="modalConfigAlertas" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 m-4 w-full max-w-lg">
+    <h3 class="text-lg font-bold mb-4 text-gray-800">🔔 Configuración de Alertas</h3>
+    
+    <!-- Habilitar/Deshabilitar alertas -->
+    <div class="mb-6 p-4 border rounded-lg">
+      <div class="flex items-center justify-between">
+        <div>
+          <h4 class="font-semibold">Activar Sistema de Alertas</h4>
+          <p class="text-sm text-gray-600">Recibir notificaciones cuando las tareas estén próximas a vencer</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="switchAlertas" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+    
+    <!-- Configuración de días de aviso -->
+    <div class="mb-6">
+      <h4 class="font-semibold mb-3">Días de Aviso Anticipado</h4>
+      <div class="space-y-2">
+        <label class="alert-config-option flex items-center p-3 border rounded-lg">
+          <input type="checkbox" class="mr-3" value="3" checked>
+          <span>3 días antes del vencimiento</span>
+        </label>
+        <label class="alert-config-option flex items-center p-3 border rounded-lg">
+          <input type="checkbox" class="mr-3" value="7" checked>
+          <span>7 días antes del vencimiento</span>
+        </label>
+        <label class="alert-config-option flex items-center p-3 border rounded-lg">
+          <input type="checkbox" class="mr-3" value="14" checked>
+          <span>14 días antes del vencimiento</span>
+        </label>
+      </div>
+    </div>
+    
+    <!-- Tipo de notificaciones -->
+    <div class="mb-6">
+      <h4 class="font-semibold mb-3">Tipo de Notificaciones</h4>
+      <div class="space-y-2">
+        <label class="alert-config-option flex items-center p-3 border rounded-lg">
+          <input type="checkbox" id="checkNotifNavegador" class="mr-3" checked>
+          <span>Notificaciones del navegador</span>
+        </label>
+        <label class="alert-config-option flex items-center p-3 border rounded-lg">
+          <input type="checkbox" id="checkSonido" class="mr-3">
+          <span>Sonido de alerta</span>
+        </label>
+      </div>
+    </div>
+    
+    <div class="flex justify-end gap-3">
+      <button id="btnCerrarConfigAlertas" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+        Cancelar
+      </button>
+      <button id="btnGuardarConfigAlertas" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
+        Guardar Configuración
+      </button>
+    </div>
+  </div>
+</div>
 </body>
-</html> 
+</html>
